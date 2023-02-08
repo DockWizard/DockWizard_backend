@@ -32,10 +32,8 @@ class AgentTSObjetcList(BaseModel):
 
 
 class AgentContainerConfig(BaseModel):
-    # container: uuid.UUID
     container_id: str
     update_frequency: int
-    # If !None pipe the healthcheck to the container
     healthcheck: Optional[str] = None
 
 

@@ -17,6 +17,7 @@ async def insert_data(request: Request, agent_object: AgentTSObjetcList):
     mapped = map(lambda x: x.dict(), agent_object.data)
     collection_id = agent_object.agent_id
 
+    # Check if collection exists. Is not implicit it exists when config says so.
     collection_list = await db.list_collection_names()
     if collection_id in collection_list:
         await db[collection_id].insert_many(mapped)

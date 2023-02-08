@@ -17,6 +17,7 @@ router = APIRouter(
 
 @router.post("/login", response_model=Token)
 async def login(request: Request, login_request: LoginRequest):
+    print(login_request)
     db = get_db_users(request)
     user = await db.find_one({"username": login_request.username})
     if not user:

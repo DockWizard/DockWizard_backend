@@ -20,9 +20,3 @@ async def get_user(username: str, request: Request):
     if not user:
         raise HTTPException(404, "User could not be found")
     return User(**user)
-
-
-@router.get("/me", response_model=User)
-async def get_me(user: User = Depends(user_scheme)):
-    print(user)
-    return user

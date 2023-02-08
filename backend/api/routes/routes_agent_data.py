@@ -103,30 +103,10 @@ async def get_all_agents(request: Request, agent_id: str):
     raise HTTPException(404, "No agent configured with that id")
 
 
-@router.delete("/delete/{agent_id}")
-async def delete_agent(request: Request, agent_id: str):
-    db_users = get_db_users(request)
-    user: User = await user_scheme(request)
-    if not user:
-        raise HTTPException(404, "User could not be found")
-
-    for server in user.servers:
-        if server.collection_id == agent_id:
-            await db_users.find_one_and_update(
-                {"username": user.username},
-                {"$pull": {
-                    "servers": server.dict()
-                }}
-            )
-            return {200: "OK"}
-    raise HTTPException(404, "Agent could not be found")
-
-
 # Needs fix! should not be able to change collection_id
 @router.put("/config/{agent_id}")
 async def get_agent_config(
-    request: Request, agent_id: str, payload: AgentConfig
-):
+        request: Request, agent_id: str, payload: AgentConfig):
     db_users = get_db_users(request)
     user: User = await user_scheme(request)
     if not user:
