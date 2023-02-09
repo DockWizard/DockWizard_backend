@@ -16,27 +16,3 @@ class User(BaseModel):
 
 class CreateNewAgentConfig(BaseModel):
     alias: str
-
-
-# Auth
-# -----Register                             X
-# -----Login                                X
-# -----Logout                               X
-
-# User[user_scheme]
-# -----Get_user                             X
-# -----Change_user
-
-# Agent[<agent_scheme>]
-# -----Post_agentTSObjects                  X
-
-# Agent_data[<user_scheme]
-# -----Get_agents                           X
-# -----Get_agent/<id>/data                  X
-# -----Get_agent/<id>/data/<container_id>
-# -----Create_new_agent_config              X
-# -----Update_agent_config                  X
-# -----Delete_agent_config                  X
-
-# Assets
-# -----Get_agent                            X
