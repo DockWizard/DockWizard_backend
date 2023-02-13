@@ -33,3 +33,4 @@ uvicorn==0.20.0
 pylint==2.15.10
 yapf==0.32.0
 motor==3.1.1
+mongomock-motor==0.0.17

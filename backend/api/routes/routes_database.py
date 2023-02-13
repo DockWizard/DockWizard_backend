@@ -93,18 +93,18 @@ async def seed_db(request: Request):
     return {200: f"Seeded collection {agent_id}"}
 
 
-@router.get("/seed_ola")
-# Deletes whoel user collection and creates a new server for 'ola'.
+@router.get("/seed_john")
+# Deletes whole user collection and creates a new server for 'john'.
 # Also creates a new collection for the new server, seeding it with 100 Agent Time Series objects.
-async def seed_ola(request: Request):
+async def seed_john(request: Request):
     db = get_db_users(request)
     db_data = get_db_data(request)
 
     data = {
-        "first_name": "ola",
+        "first_name": "john",
         "surname": "nordmann",
-        "username": "ola",
-        "email": "ola@email.com",
+        "username": "john",
+        "email": "john@email.com",
         "password": "password",
         "confirm_password": "password"
     }
@@ -122,11 +122,11 @@ async def seed_ola(request: Request):
 
     count = await db.count_documents({})
     if count != 0:
-        print("Found Ola", count)
+        print("Found john", count)
         db.delete_many({})
     await db.insert_one(new_user_dict)
 
-    alias = {"alias": "Ola's server"}
+    alias = {"alias": "John's server"}
     payload = CreateNewAgentConfig(**alias)
     # Update user with new server config
     new_server = {
@@ -160,7 +160,7 @@ async def seed_ola(request: Request):
         "metadata":
             {
                 "container_id": uuid.uuid4().hex,
-                "container_name": "Olas api container",
+                "container_name": "john api container",
                 "type": "mem"
             },
         "timestamp": "2023-01-20T09:48:19.655Z",
@@ -183,4 +183,4 @@ async def seed_ola(request: Request):
         await db_data[new_server.collection_id].insert_one(agent_data.dict())
         print(agent_data.metadata.container_id)
 
-    return {200: "Seeded Ola"}
+    return {200: "Seeded John"}
