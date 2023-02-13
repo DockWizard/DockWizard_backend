@@ -9,14 +9,17 @@ class AgentMetaData(BaseModel):
     # server_id: str
     container_id: str
     container_name: str
+    container_image: str
 
 
 class AgentData(BaseModel):
-    cpu: int
-    memory_perc: int
+    cpu: float
+    memory_perc: float
     memory_tot: int
-    net_io: int
-    block_io: int
+    total_rx: int
+    total_tx: int
+    io_read: int
+    io_write: int
     healthcheck: Optional[bool] = None
 
 
