@@ -3,9 +3,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
 from settings import settings
 
-
-
-
 def startup_db_client(app):
     db = AsyncIOMotorClient(settings.MONGO_URI)
     app.db_data = db.data

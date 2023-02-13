@@ -15,6 +15,3 @@ async def add_test_user():
     await collection.insert_one(user_data)
 
     return collection
-
-def patch_db_users(collection, app):
-    app.__setattr__("db_users", {"user_data": collection})
