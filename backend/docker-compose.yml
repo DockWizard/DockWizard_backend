@@ -25,6 +25,8 @@ services:
     image: mongo:latest
     command: mongod --port 27017
     restart: always
+    ports:
+      - "27017:27017"
     networks:
       - backend
     # environment:

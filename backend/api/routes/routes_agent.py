@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Request, HTTPException
-from models.agent import AgentTSObjetcList
-from database import get_db_data
+from fastapi import APIRouter, Request
+from models.agent import AgentTSObjectList
+from utils.auth_helpers import agent_scheme
 
 router = APIRouter(
     prefix="/agent",
@@ -10,16 +10,11 @@ router = APIRouter(
     }},
 )
 
-
-@router.post("/{collection_id}")
-async def insert_data(request: Request, agent_object: AgentTSObjetcList):
-    db = get_db_data(request)
+@router.post("/send_data")
+async def insert_data(request: Request, agent_object: AgentTSObjectList):
+    agent = await agent_scheme(request)
     mapped = map(lambda x: x.dict(), agent_object.data)
-    collection_id = agent_object.agent_id
 
-    collection_list = await db.list_collection_names()
-    if collection_id in collection_list:
-        await db[collection_id].insert_many(mapped)
-    else:
-        raise HTTPException(404, "Collection not found")
+    await agent.data.insert_many(mapped)
+
     return {201: "Created"}
