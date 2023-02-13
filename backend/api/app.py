@@ -18,6 +18,10 @@ app.add_middleware(
 async def startup():
     startup_db_client(app)
 
+@app.get("/")
+async def root():
+    return {"msg": "Hello World"}
+
 
 app.include_router(
     routes_agent_data.router, dependencies=[Depends(user_scheme)]

@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/{username}")
 async def get_user(username: str, request: Request):
     db = get_db_users(request)
     user = await db.find_one({"username": username})
