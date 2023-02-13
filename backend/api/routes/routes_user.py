@@ -16,7 +16,7 @@ router = APIRouter(
 @router.get("/")
 async def get_user(username: str, request: Request):
     db = get_db_users(request)
-    user = db.find_one({"username": username})
+    user = await db.find_one({"username": username})
     if not user:
         raise HTTPException(404, "User could not be found")
     return User(**user)

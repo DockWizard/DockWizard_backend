@@ -1,23 +1,26 @@
-from fastapi.testclient import TestClient
-from utils.auth_helpers import get_password_hash
-from app import app
 import pytest
-from tests.conftest import mongo_mock
+from fastapi.testclient import TestClient
 
-client = TestClient(app)
+from tests.utils import add_test_user, patch_db_users
 
 @pytest.mark.asyncio
-async def test_get_user(mongo_mock):
-    await mongo_mock
-    response = client.get("/user/test_user")
-    assert response.status_code == 200
-    assert response.json()["_id"] == ""
-    assert response.json()["username"] == "test_user"
-    assert response.json()["email"] == "test@test.com"
-    assert response.json()["first_name"] == "test"
-    assert response.json()["last_name"] == "testesen"
-    assert response.json()["servers"] == []
-    assert response.json()["_hashed_password"] == get_password_hash("password")
+async def test_get_user():
+    from app import app
+
+    collection = await add_test_user()
+    patch_db_users(collection, app)
+
+    client = TestClient(app)
+
+    response = client.get("/user?username=test_user")
+    res_json = response.json()
+    assert res_json["username"] == "test_user"
+    assert res_json["email"] == "test@test.com"
+    assert res_json["first_name"] == "test"
+    assert res_json["surname"] == "testesen"
+    assert res_json["servers"] == []
+    assert "_hashed_password" not in res_json
+    assert "_id" not in res_json
 
 
 
