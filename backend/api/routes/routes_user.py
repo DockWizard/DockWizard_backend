@@ -24,5 +24,4 @@ async def get_user(username: str, request: Request):
 
 @router.get("/me", response_model=User)
 async def get_me(user: User = Depends(user_scheme)):
-    print(user)
     return user

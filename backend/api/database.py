@@ -2,12 +2,19 @@ from motor.core import AgnosticDatabase, Collection
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
 from settings import settings
+from mongomock_motor import AsyncMongoMockClient
+
+
+def create_db_client():
+    return AsyncIOMotorClient(settings.MONGO_URI)
+    # return AsyncMongoMockClient()
 
 
 def startup_db_client(app):
-    db = AsyncIOMotorClient(settings.MONGO_URI)
+    # db = AsyncIOMotorClient(settings.MONGO_URI)
+    db = create_db_client()
     app.db_data = db.data
-    app.db_users = db.users
+    app.db_users = db['users']
     app.db_tokens = db.tokens
 
 

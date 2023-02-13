@@ -6,11 +6,20 @@ from utils.auth_helpers import user_scheme, agent_scheme
 
 app = FastAPI()
 
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -26,4 +35,4 @@ app.include_router(routes_agent.router, dependencies=[Depends(agent_scheme)])
 app.include_router(routes_database.router)
 app.include_router(routes_auth.router)
 app.include_router(routes_assets.router)
-app.include_router(routes_user.router)
+app.include_router(routes_user.router, dependencies=[Depends(user_scheme)])
