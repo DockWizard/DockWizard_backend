@@ -1,11 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
 from utils.auth_helpers import user_scheme
-from utils import auth_helpers
 from tests.utils import add_test_user
 from models.user import User
 import app as app_module
-import database
 
 @pytest.fixture()
 def client():
@@ -29,7 +27,7 @@ async def test_get_user(client, monkeypatch):
     assert "_id" not in res_json
 
 @pytest.mark.asyncio
-async def test_get_me(client, monkeypatch):
+async def test_get_me(client):
     test_user = User(**{
         "username": "test_user",
         "email": "test@test.com",
@@ -37,7 +35,7 @@ async def test_get_me(client, monkeypatch):
         "surname": "testesen",
         "servers": []
     })
-    monkeypatch.setattr(client.app, "dependency_overrides", {user_scheme: lambda: test_user})
+    client.app.dependency_overrides[user_scheme] = lambda: test_user
 
     response = client.get("/user/me")
     res_json = response.json()
