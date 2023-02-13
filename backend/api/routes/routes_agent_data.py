@@ -15,9 +15,9 @@ router = APIRouter(
 )
 
 
-@router.get("/collection/{collection_id}")
+@router.get("/data/{collection_id}")
 # Will return all documents in a collection(server with collection id)
-async def get_collection_by_path(request: Request, collection_id: str):
+async def get_agent_data(request: Request, collection_id: str):
     db = get_db_data(request)
     user: User = await user_scheme(request)
     for server in user.servers:
@@ -90,7 +90,7 @@ async def get_agents(request: Request):
 
 
 @router.get("/agents/{agent_id}")
-async def get_all_agents(request: Request, agent_id: str):
+async def get_agent(request: Request, agent_id: str):
     db = get_db_users(request)
     user: User = await user_scheme(request)
     if not user:
@@ -103,28 +103,9 @@ async def get_all_agents(request: Request, agent_id: str):
     raise HTTPException(404, "No agent configured with that id")
 
 
-@router.delete("/delete/{agent_id}")
-async def delete_agent(request: Request, agent_id: str):
-    db_users = get_db_users(request)
-    user: User = await user_scheme(request)
-    if not user:
-        raise HTTPException(404, "User could not be found")
-
-    for server in user.servers:
-        if server.collection_id == agent_id:
-            await db_users.find_one_and_update(
-                {"username": user.username},
-                {"$pull": {
-                    "servers": server.dict()
-                }}
-            )
-            return {200: "OK"}
-    raise HTTPException(404, "Agent could not be found")
-
-
 # Needs fix! should not be able to change collection_id
 @router.put("/config/{agent_id}")
-async def get_agent_config(
+async def update_agent(
     request: Request, agent_id: str, payload: AgentConfig
 ):
     db_users = get_db_users(request)
@@ -153,7 +134,7 @@ async def get_agent_config(
 
 
 @router.delete("/config/{agent_id}")
-async def delete_agent_config(request: Request, agent_id: str):
+async def delete_agent(request: Request, agent_id: str):
     db_users = get_db_users(request)
     db_data = get_db_data(request)
     user: User = await user_scheme(request)
