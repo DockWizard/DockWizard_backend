@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Response
 from models.user import User
 from models.auth import Token, CreateUserRequest, CreateUserResponse, LoginRequest
 from database import get_db_users, get_db_tokens
@@ -41,6 +41,16 @@ async def login(request: Request, login_request: LoginRequest):
     )
     await token_db.insert_one(new_token.dict())
     return new_token
+
+
+@router.post("/logout")
+async def logout(request: Request):
+    token = request.headers.get("Authorization")
+    if not token:
+        raise HTTPException(400, "No token provided")
+    token_db = get_db_tokens(request)
+    await token_db.delete_one({"bearer_token": token})
+    return Response(status_code=200)
 
 
 @router.post("/register", response_model=CreateUserResponse)

@@ -34,65 +34,6 @@ async def cleanup_db_client():
     return {200: "Deleted USERS database"}
 
 
-@router.post("/seed")
-async def seed_db(request: Request):
-    print("seeding")
-
-    db = get_db_data(request)
-
-    agent_id = uuid.uuid4().hex
-    agent_list = await db.list_collection_names()
-    if agent_id in agent_list:
-        await db[agent_id].drop()
-
-    await db.create_collection(
-        agent_id,
-        timeseries={
-            "timeField": "timestamp",
-            "metaField": "metadata",
-            "granularity": "seconds"
-        }
-    )
-    await db[agent_id].create_index([("metadata.container_id", 1)])
-
-    containers = [
-        ("api", "101"),
-        ("db", "102"),
-        ("web", "103"),
-        ("nginx", "104"),
-        ("redis", "105"),
-    ]
-
-    date = datetime.now()
-    insert_many_list = []
-
-    for i in range(500):
-        data: AgentTSObjetc = {
-            "timestamp": "2023-01-20T09:48:19.655Z",
-            "metadata":
-                {
-                    "container_id": containers[i % 5][1],
-                    "container_name": containers[i % 5][0],
-                },
-            "data":
-                {
-                    "cpu": str(random.randint(0, 100)),
-                    "memory_perc": str(random.randint(0, 100)),
-                    "memory_tot": str(random.randint(0, 4000)),
-                    "net_io": str(random.randint(0, 100000)),
-                    "block_io": str(random.randint(0, 4000)),
-                    "healthcheck": str(random.choice([True, False]))
-                }
-        }
-        servicedata = AgentTSObjetc(**data)
-        servicedata.timestamp = date + timedelta(seconds=i * 10)
-        insert_many_list.append(servicedata.dict())
-
-    await db[agent_id].insert_many(insert_many_list)
-
-    return {200: f"Seeded collection {agent_id}"}
-
-
 @router.get("/seed_john")
 # Deletes whole user collection and creates a new server for 'john'.
 # Also creates a new collection for the new server, seeding it with 100 Agent Time Series objects.
@@ -161,7 +102,7 @@ async def seed_john(request: Request):
             {
                 "container_id": uuid.uuid4().hex,
                 "container_name": "john api container",
-                "type": "mem"
+                "container_image": "john/api:latest",
             },
         "timestamp": "2023-01-20T09:48:19.655Z",
         "data":
@@ -169,8 +110,10 @@ async def seed_john(request: Request):
                 "cpu": random.randint(1, 100),
                 "memory_perc": 66,
                 "memory_tot": 55,
-                "net_io": 33,
-                "block_io": 33
+                "total_rx": 23,
+                "total_tx": 65,
+                "io_read": 65,
+                "io_write": 65,
             }
     }
     agent_data = AgentTSObjetc(**data)

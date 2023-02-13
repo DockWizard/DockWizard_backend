@@ -10,6 +10,7 @@ router = APIRouter(
     }},
 )
 
+
 @router.post("/send_data")
 async def insert_data(request: Request, agent_object: AgentTSObjectList):
     agent = await agent_scheme(request)
