@@ -26,8 +26,7 @@ class AgentTSObjetc(BaseModel):
     data: AgentData
 
 
-class AgentTSObjetcList(BaseModel):
-    agent_id: str
+class AgentTSObjectList(BaseModel):
     data: List[AgentTSObjetc]
 
 
