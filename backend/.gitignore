@@ -51,3 +51,4 @@ docs/_build/
 
 #DockWizard stuff
 mongodata/
+.env/

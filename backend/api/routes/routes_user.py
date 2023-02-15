@@ -14,7 +14,6 @@ router = APIRouter(
 
 @router.get("/me", response_model=User)
 async def get_me(user: User = Depends(user_scheme)):
-    print(user)
     return user
 
 @router.get("/{username}")

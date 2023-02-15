@@ -34,77 +34,18 @@ async def cleanup_db_client():
     return {200: "Deleted USERS database"}
 
 
-@router.post("/seed")
-async def seed_db(request: Request):
-    print("seeding")
-
-    db = get_db_data(request)
-
-    agent_id = uuid.uuid4().hex
-    agent_list = await db.list_collection_names()
-    if agent_id in agent_list:
-        await db[agent_id].drop()
-
-    await db.create_collection(
-        agent_id,
-        timeseries={
-            "timeField": "timestamp",
-            "metaField": "metadata",
-            "granularity": "seconds"
-        }
-    )
-    await db[agent_id].create_index([("metadata.container_id", 1)])
-
-    containers = [
-        ("api", "101"),
-        ("db", "102"),
-        ("web", "103"),
-        ("nginx", "104"),
-        ("redis", "105"),
-    ]
-
-    date = datetime.now()
-    insert_many_list = []
-
-    for i in range(500):
-        data: AgentTSObjetc = {
-            "timestamp": "2023-01-20T09:48:19.655Z",
-            "metadata":
-                {
-                    "container_id": containers[i % 5][1],
-                    "container_name": containers[i % 5][0],
-                },
-            "data":
-                {
-                    "cpu": str(random.randint(0, 100)),
-                    "memory_perc": str(random.randint(0, 100)),
-                    "memory_tot": str(random.randint(0, 4000)),
-                    "net_io": str(random.randint(0, 100000)),
-                    "block_io": str(random.randint(0, 4000)),
-                    "healthcheck": str(random.choice([True, False]))
-                }
-        }
-        servicedata = AgentTSObjetc(**data)
-        servicedata.timestamp = date + timedelta(seconds=i * 10)
-        insert_many_list.append(servicedata.dict())
-
-    await db[agent_id].insert_many(insert_many_list)
-
-    return {200: f"Seeded collection {agent_id}"}
-
-
-@router.get("/seed_ola")
-# Deletes whoel user collection and creates a new server for 'ola'.
+@router.get("/seed_john")
+# Deletes whole user collection and creates a new server for 'john'.
 # Also creates a new collection for the new server, seeding it with 100 Agent Time Series objects.
-async def seed_ola(request: Request):
+async def seed_john(request: Request):
     db = get_db_users(request)
     db_data = get_db_data(request)
 
     data = {
-        "first_name": "ola",
+        "first_name": "john",
         "surname": "nordmann",
-        "username": "ola",
-        "email": "ola@email.com",
+        "username": "john",
+        "email": "john@email.com",
         "password": "password",
         "confirm_password": "password"
     }
@@ -122,11 +63,11 @@ async def seed_ola(request: Request):
 
     count = await db.count_documents({})
     if count != 0:
-        print("Found Ola", count)
+        print("Found john", count)
         db.delete_many({})
     await db.insert_one(new_user_dict)
 
-    alias = {"alias": "Ola's server"}
+    alias = {"alias": "John's server"}
     payload = CreateNewAgentConfig(**alias)
     # Update user with new server config
     new_server = {
@@ -160,8 +101,8 @@ async def seed_ola(request: Request):
         "metadata":
             {
                 "container_id": uuid.uuid4().hex,
-                "container_name": "Olas api container",
-                "type": "mem"
+                "container_name": "john api container",
+                "container_image": "john/api:latest",
             },
         "timestamp": "2023-01-20T09:48:19.655Z",
         "data":
@@ -169,8 +110,10 @@ async def seed_ola(request: Request):
                 "cpu": random.randint(1, 100),
                 "memory_perc": 66,
                 "memory_tot": 55,
-                "net_io": 33,
-                "block_io": 33
+                "total_rx": 23,
+                "total_tx": 65,
+                "io_read": 65,
+                "io_write": 65,
             }
     }
     agent_data = AgentTSObjetc(**data)
@@ -183,4 +126,4 @@ async def seed_ola(request: Request):
         await db_data[new_server.collection_id].insert_one(agent_data.dict())
         print(agent_data.metadata.container_id)
 
-    return {200: "Seeded Ola"}
+    return {200: "Seeded John"}

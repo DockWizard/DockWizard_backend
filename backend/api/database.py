@@ -3,10 +3,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
 from settings import settings
 
+
+def create_db_client():
+    return AsyncIOMotorClient(settings.MONGO_URI)
+
+
 def startup_db_client(app):
-    db = AsyncIOMotorClient(settings.MONGO_URI)
+    db = create_db_client()
     app.db_data = db.data
-    app.db_users = db.users
+    app.db_users = db['users']
     app.db_tokens = db.tokens
 
 
