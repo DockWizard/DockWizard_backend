@@ -16,3 +16,12 @@ class User(BaseModel):
 
 class CreateNewAgentConfig(BaseModel):
     alias: str
+
+
+class EditUser(BaseModel):
+    username: Optional[str]
+    email: Optional[str]
+    first_name: Optional[str]
+    surname: Optional[str]
+    password: Optional[str]
+    confirm_password: Optional[str]
