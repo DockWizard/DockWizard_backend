@@ -5,6 +5,7 @@ from models.user import User, CreateNewAgentConfig
 import secrets
 from database import get_db_data, get_db_users
 from utils.auth_helpers import user_scheme
+from typing import List
 
 router = APIRouter(
     prefix="/agent_data",
@@ -24,6 +25,54 @@ async def get_agent_data(request: Request, collection_id: str):
         if server.collection_id != collection_id:
             raise HTTPException(404, "No agent configured with that id")
     cursor = db[UUID(collection_id).hex].find({})
+    return [
+        AgentTSObjetc.parse_obj(doc)
+        for doc in await cursor.to_list(length=None)
+    ]
+
+
+@router.get(
+    "/data/{collection_id}/containers", response_model=List[AgentTSObjetc]
+)
+# Will return all containers as the first agentTSobject instance that match.
+async def get_agent_containers(request: Request, collection_id: str):
+    db = get_db_data(request)
+    user: User = await user_scheme(request)
+    for server in user.servers:
+        if server.collection_id == collection_id:
+            print("CONTAINERS", server.collection_id, collection_id)
+            cursor = db[UUID(collection_id).hex
+                       ].distinct("metadata.container_id")
+
+            if cursor is None:
+                raise HTTPException(404, "No containers found")
+
+            containers = [doc for doc in await cursor]
+
+            container_list = []
+            for container in containers:
+                cursor = db[UUID(collection_id).hex].find_one(
+                    {"metadata.container_id": container}
+                )
+                container_list.append(AgentTSObjetc.parse_obj(await cursor))
+            return container_list
+
+    raise HTTPException(404, "No agent configured with that id")
+
+
+@router.get("/data/{collection_id}/containers/{container_id}")
+# Will return all documents in a collection(server with collection id)
+async def get_container_data(
+    request: Request, collection_id: str, container_name: str
+):
+    db = get_db_data(request)
+    user: User = await user_scheme(request)
+    for server in user.servers:
+        if server.collection_id != collection_id:
+            raise HTTPException(404, "No agent configured with that id")
+    cursor = db[UUID(collection_id).hex].find(
+        {"metadata.container_name": container_name}
+    )
     return [
         AgentTSObjetc.parse_obj(doc)
         for doc in await cursor.to_list(length=None)
@@ -105,9 +154,7 @@ async def get_agent(request: Request, agent_id: str):
 
 # Needs fix! should not be able to change collection_id
 @router.put("/config/{agent_id}")
-async def update_agent(
-    request: Request, agent_id: str, payload: AgentConfig
-):
+async def update_agent(request: Request, agent_id: str, payload: AgentConfig):
     db_users = get_db_users(request)
     user: User = await user_scheme(request)
     if not user:

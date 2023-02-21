@@ -71,7 +71,13 @@ async def seed_john(request: Request):
     await add_server("Microservices", request)
     await add_server("Talos Cluster", request)
     await add_server("Utanix node", request)
-    await add_server("Rocky", request)
+    await add_server("gRPC", request)
+    await add_server("Client services", request)
+    await add_server("VPN service", request)
+    await add_server("DNS server", request)
+    await add_server("Name Server", request)
+    await add_server("TD server", request)
+    await add_server("Mail server", request)
 
     return {200: "Seeded John"}
 
@@ -93,8 +99,7 @@ async def add_server(alias: str, request: Request):
     new_server = AgentConfig(**new_server)
     print(new_server)
     await db.find_one_and_update(
-        {"username": "john"},
-        {"$push": {
+        {"username": "john"}, {"$push": {
             "servers": new_server.dict()
         }}
     )
@@ -109,13 +114,13 @@ async def add_server(alias: str, request: Request):
     )
     await db_data[
         new_server.collection_id].create_index([("metadata.container_id", 1)])
-
     data: AgentTSObjetc = {
         "metadata":
             {
                 "container_id": uuid.uuid4().hex,
                 "container_name": "john api container",
                 "container_image": "john/api:latest",
+                "container_state": "running"
             },
         "timestamp": "2023-01-20T09:48:19.655Z",
         "data":
@@ -132,9 +137,17 @@ async def add_server(alias: str, request: Request):
     agent_data = AgentTSObjetc(**data)
 
     date = datetime.now()
+    container_names = [
+        "MicroService_ Api", "MicroService_Auth", "MicroService_Users",
+        "MicroService_Orders", "MicroService_Payments"
+    ]
+    # Add 5 containers with 100 data points each
+    for idx in range(5):
+        for i in range(100):
+            agent_data.timestamp = date + timedelta(seconds=i)
+            agent_data.metadata.container_name = container_names[idx]
+            await db_data[
+                new_server.collection_id].insert_one(agent_data.dict())
+            print(agent_data.metadata.container_id)
 
-    for i in range(100):
-        agent_data.timestamp = date + timedelta(seconds=i)
         agent_data.metadata.container_id = uuid.uuid4().hex
-        await db_data[new_server.collection_id].insert_one(agent_data.dict())
-        print(agent_data.metadata.container_id)
