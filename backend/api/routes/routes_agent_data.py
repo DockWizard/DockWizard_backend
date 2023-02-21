@@ -79,7 +79,7 @@ async def get_container_data(
     ]
 
 
-@router.post("/config_new_agent")
+@router.post("/config_new_agent", response_model=AgentConfig)
 async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
     db_data = get_db_data(request)
     db_users = get_db_users(request)
@@ -123,8 +123,7 @@ async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
         await db_data[new_server.collection_id].create_index(
             [("metadata.container_id", 1)]
         )
-
-        return {201: "Created", "collection_id": new_server}
+        return new_server
     except Exception as exc:
         return {400: "Bad request", "error": str(exc)}
 
