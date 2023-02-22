@@ -60,23 +60,28 @@ async def get_agent_containers(request: Request, collection_id: str):
     raise HTTPException(404, "No agent configured with that id")
 
 
-@router.get("/data/{collection_id}/containers/{container_id}")
+@router.get(
+    "/data/{collection_id}/containers/{container_id}",
+    response_model=List[AgentTSObjetc]
+)
 # Will return all documents in a collection(server with collection id)
 async def get_container_data(
-    request: Request, collection_id: str, container_name: str
+    request: Request, collection_id: str, container_id: str
 ):
+    print(collection_id, "------", UUID(collection_id).hex)
+    print(container_id)
     db = get_db_data(request)
     user: User = await user_scheme(request)
     for server in user.servers:
-        if server.collection_id != collection_id:
-            raise HTTPException(404, "No agent configured with that id")
-    cursor = db[UUID(collection_id).hex].find(
-        {"metadata.container_name": container_name}
-    )
-    return [
-        AgentTSObjetc.parse_obj(doc)
-        for doc in await cursor.to_list(length=None)
-    ]
+        if server.collection_id == collection_id:
+            cursor = db[UUID(collection_id).hex].find(
+                {"metadata.container_id": container_id}
+            )
+            return [
+                AgentTSObjetc.parse_obj(doc)
+                for doc in await cursor.to_list(length=None)
+            ]
+    raise HTTPException(404, "No agent configured with that id")
 
 
 @router.post("/config_new_agent", response_model=AgentConfig)
@@ -137,7 +142,7 @@ async def get_agents(request: Request):
     return [AgentConfig.parse_obj(i) for i in user.servers]
 
 
-@router.get("/agents/{agent_id}")
+@router.get("/agents/{agent_id}", response_model=AgentConfig)
 async def get_agent(request: Request, agent_id: str):
     db = get_db_users(request)
     user: User = await user_scheme(request)

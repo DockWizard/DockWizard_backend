@@ -146,6 +146,8 @@ async def add_server(alias: str, request: Request):
         for i in range(100):
             agent_data.timestamp = date + timedelta(seconds=i)
             agent_data.metadata.container_name = container_names[idx]
+            agent_data.data.cpu = random.randint(1, 100)
+            agent_data.data.memory_perc = random.randint(1, 100)
             await db_data[
                 new_server.collection_id].insert_one(agent_data.dict())
             print(agent_data.metadata.container_id)
