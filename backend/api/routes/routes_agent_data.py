@@ -6,6 +6,7 @@ import secrets
 from database import get_db_data, get_db_users
 from utils.auth_helpers import user_scheme
 from typing import List
+from datetime import datetime
 
 router = APIRouter(
     prefix="/agent_data",
@@ -66,20 +67,43 @@ async def get_agent_containers(request: Request, collection_id: str):
 )
 # Will return all documents in a collection(server with collection id)
 async def get_container_data(
-    request: Request, collection_id: str, container_id: str
+    request: Request, collection_id: str, container_id: str,
+    time_span_minutes: int
 ):
     print(collection_id, "------", UUID(collection_id).hex)
     print(container_id)
+
+    pipeline = [
+        {
+            "$match":
+                {
+                    "$expr":
+                        {
+                            "$gt":
+                                [
+                                    "$timestamp", {
+                                        "$dateSubtract":
+                                            {
+                                                "startDate": "$$NOW",
+                                                "unit": "minute",
+                                                "amount": time_span_minutes
+                                            }
+                                    }
+                                ]
+                        },
+                    "metadata.container_id": container_id
+                },
+        },
+    ]
+
     db = get_db_data(request)
     user: User = await user_scheme(request)
     for server in user.servers:
         if server.collection_id == collection_id:
-            cursor = db[UUID(collection_id).hex].find(
-                {"metadata.container_id": container_id}
-            )
+            cursor = db[UUID(collection_id).hex].aggregate(pipeline)
             return [
                 AgentTSObjetc.parse_obj(doc)
-                for doc in await cursor.to_list(length=None)
+                for doc in await cursor.to_list(length=100)
             ]
     raise HTTPException(404, "No agent configured with that id")
 

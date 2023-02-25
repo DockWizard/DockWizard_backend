@@ -11,6 +11,7 @@ from models.user import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 @dataclass
 class AgentScheme:
     user: Collection
@@ -49,13 +50,18 @@ async def user_scheme(request: Request) -> User:
 
 # Bearer token holding API key and key is valid for this collection?
 async def agent_scheme(request: Request) -> AgentScheme:
+    print("fek")
     auth_header = request.headers.get("Authorization")
     if not auth_header:
         raise HTTPException(401, "No authorization header")
     bearer_token = auth_header.removeprefix("Bearer ")
     user_db = get_db_users(request)
     agent_config = await user_db.find_one(
-        {"servers": {"$elemMatch": {"api_key": bearer_token}}},
+        {"servers": {
+            "$elemMatch": {
+                "api_key": bearer_token
+            }
+        }},
     )
     if not agent_config:
         raise HTTPException(401, "Invalid token")
