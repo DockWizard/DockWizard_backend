@@ -1,12 +1,11 @@
 from uuid import uuid4, UUID
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Response
 from models.agent import AgentConfig, AgentTSObjetc
 from models.user import User, CreateNewAgentConfig
 import secrets
 from database import get_db_data, get_db_users
 from utils.auth_helpers import user_scheme
 from typing import List
-from datetime import datetime
 
 router = APIRouter(
     prefix="/agent_data",
@@ -108,6 +107,63 @@ async def get_container_data(
     raise HTTPException(404, "No agent configured with that id")
 
 
+@router.get(
+    "/data/{collection_id}/containers/summary/180",
+    response_model=List[AgentTSObjetc]
+)
+# Will return all documents in a collection(server with collection id)
+async def get_agent_summary(request: Request, collection_id: str):
+
+    pipeline = [
+        {
+            "$match":
+                {
+                    "$expr":
+                        {
+                            "$gt":
+                                [
+                                    "$timestamp", {
+                                        "$dateSubtract":
+                                            {
+                                                "startDate": "$$NOW",
+                                                "unit": "minute",
+                                                "amount": 60
+                                            }
+                                    }
+                                ]
+                        },
+                },
+        },
+    ]
+
+    db = get_db_data(request)
+    user: User = await user_scheme(request)
+    for server in user.servers:
+        if server.collection_id == collection_id:
+            cursor = db[UUID(collection_id).hex].aggregate(pipeline)
+            return [
+                AgentTSObjetc.parse_obj(doc)
+                for doc in await cursor.to_list(length=500)
+            ]
+    raise HTTPException(404, "No agent configured with that id")
+
+
+@router.delete("/data/{collection_id}/containers/{container_id}")
+#Will delete all documents in collection with container_id
+async def delete_container_data(
+    request: Request, collection_id: str, container_id: str
+):
+    db = get_db_data(request)
+    user: User = await user_scheme(request)
+    for server in user.servers:
+        if server.collection_id == collection_id:
+            db[UUID(collection_id).hex].delete_many(
+                {"metadata.container_id": container_id}
+            )
+            return Response(status_code=200)
+    raise HTTPException(404, "No agent configured with that id")
+
+
 @router.post("/config_new_agent", response_model=AgentConfig)
 async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
     db_data = get_db_data(request)
@@ -158,6 +214,7 @@ async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
 
 
 @router.get("/agents")
+# Will return all agents the the specific user
 async def get_agents(request: Request):
     user: User = await user_scheme(request)
     if not user:
@@ -167,8 +224,8 @@ async def get_agents(request: Request):
 
 
 @router.get("/agents/{agent_id}", response_model=AgentConfig)
+# Will return the config of a specific agent if user owns it
 async def get_agent(request: Request, agent_id: str):
-    db = get_db_users(request)
     user: User = await user_scheme(request)
     if not user:
         raise HTTPException(404, "User could not be found")
