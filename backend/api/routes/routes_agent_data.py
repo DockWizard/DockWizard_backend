@@ -77,21 +77,23 @@ async def get_container_data(
     time_span = datetime.datetime.now() - datetime.timedelta(
         minutes=time_span_minutes
     )
-    hop_interval = 1
+    hop_interval = 3600
     if time_span_minutes == 5:
         hop_interval = 0.1
+    elif time_span_minutes == 30:
+        hop_interval = 0.5
     elif time_span_minutes == 60:
-        hop_interval = 5
+        hop_interval = 1
     elif time_span_minutes == 60 * 6:
-        hop_interval = 30
+        hop_interval = 5
     elif time_span_minutes == 60 * 24:
-        hop_interval = 30
+        hop_interval = 15
     elif time_span_minutes == 60 * 24 * 7:
-        hop_interval = 60 * 6
+        hop_interval = 60
     elif time_span_minutes == 60 * 24 * 30:
-        hop_interval = 60 * 24
+        hop_interval = 60 * 12
     elif time_span_minutes == 60 * 24 * 30 * 3:
-        hop_interval = 60 * 24 * 7
+        hop_interval = 60 * 24
 
     # Create a pipeline that matches timestamp greater than
     # time_span and container_id.
