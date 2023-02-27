@@ -213,28 +213,121 @@ async def get_container_data(
     response_model=List[AgentTSObjetc]
 )
 # Will return all documents in a collection(server with collection id)
-async def get_agent_summary(request: Request, collection_id: str):
+async def get_agent_summary(
+    request: Request, collection_id: str, time_span_minutes: int
+):
+    time_span = datetime.datetime.now() - datetime.timedelta(
+        minutes=time_span_minutes
+    )
+    hop_interval = 1
+    if time_span_minutes == 5:
+        hop_interval = 0.1
+    elif time_span_minutes == 60:
+        hop_interval = 5
+    elif time_span_minutes == 60 * 6:
+        hop_interval = 30
+    elif time_span_minutes == 60 * 24:
+        hop_interval = 30
+    elif time_span_minutes == 60 * 24 * 7:
+        hop_interval = 60 * 6
+    elif time_span_minutes == 60 * 24 * 30:
+        hop_interval = 60 * 24
+    elif time_span_minutes == 60 * 24 * 30 * 3:
+        hop_interval = 60 * 24 * 7
 
     pipeline = [
         {
-            "$match":
+            "$match": {
+                "$expr": {
+                    "$gt": ["$timestamp", time_span]
+                },
+            },
+        },
+        {
+            "$group":
                 {
-                    "$expr":
+                    "_id":
                         {
-                            "$gt":
-                                [
-                                    "$timestamp", {
-                                        "$dateSubtract":
+                            "$toDate":
+                                {
+                                    "$subtract":
+                                        [
                                             {
-                                                "startDate": "$$NOW",
-                                                "unit": "minute",
-                                                "amount": 60
+                                                "$toLong": {
+                                                    "$toDate": "$_id"
+                                                }
+                                            }, {
+                                                "$mod":
+                                                    [
+                                                        {
+                                                            "$toLong":
+                                                                {
+                                                                    "$toDate":
+                                                                        "$_id"
+                                                                }
+                                                        },
+                                                        1000 * 60 * hop_interval
+                                                    ]
                                             }
-                                    }
-                                ]
+                                        ]
+                                }
                         },
+                    "metadata": {
+                        "$first": "$metadata"
+                    },
+                    "timestamp": {
+                        "$last": "$timestamp"
+                    },
+                    # Accumulate all data in the data field and take the average
+                    "cpu": {
+                        "$avg": "$data.cpu"
+                    },
+                    "memory_perc": {
+                        "$avg": "$data.memory_perc"
+                    },
+                    "memory_tot": {
+                        "$avg": "$data.memory_tot"
+                    },
+                    "total_rx": {
+                        "$avg": "$data.total_rx"
+                    },
+                    "total_tx": {
+                        "$avg": "$data.total_tx"
+                    },
+                    "io_read": {
+                        "$avg": "$data.io_read"
+                    },
+                    "io_write": {
+                        "$avg": "$data.io_write"
+                    },
                 },
         },
+        {
+            "$sort": {
+                "timestamp": 1
+            }
+        },
+        {
+            # Then reduce the data into the "data" field
+            "$addFields":
+                {
+                    "data.cpu": "$cpu",
+                    "data.memory_perc": "$memory_perc",
+                    "data.memory_tot": "$memory_tot",
+                    "data.total_rx": "$total_rx",
+                    "data.total_tx": "$total_tx",
+                    "data.io_read": "$io_read",
+                    "data.io_write": "$io_write",
+                }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "metadata": 1,
+                "timestamp": 1,
+                "data": 1,
+            },
+        }
     ]
 
     db = get_db_data(request)
