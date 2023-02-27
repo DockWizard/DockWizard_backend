@@ -388,3 +388,31 @@ async def delete_agent(request: Request, agent_id: str):
     except Exception as exc:
         raise HTTPException(404, "Something went wrong", str(exc))
     raise HTTPException(404, "Agent could not be found")
+
+
+@router.get("/config/regenerate_api_key/{agent_id}")
+async def regenerate_api_key(request: Request, agent_id: str):
+    db_users = get_db_users(request)
+    user: User = await user_scheme(request)
+    if not user:
+        raise HTTPException(404, "User could not be found")
+
+    for server in user.servers:
+        if server.collection_id == agent_id:
+            api_token = secrets.token_urlsafe(32)
+
+            updated: User = await db_users.find_one_and_update(
+                {
+                    "username": user.username,
+                    "servers.collection_id": agent_id
+                }, {"$set": {
+                    "servers.$.api_key": api_token
+                }}
+            )
+            if updated:
+                updated = User.parse_obj(updated)
+                for server in updated.servers:
+                    if server.collection_id == agent_id:
+                        return AgentConfig.parse_obj(server)
+
+    raise HTTPException(404, "Agent could not be found")
