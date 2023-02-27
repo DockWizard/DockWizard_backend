@@ -52,3 +52,4 @@ docs/_build/
 #DockWizard stuff
 mongodata/
 .env/
+.pytest_cache

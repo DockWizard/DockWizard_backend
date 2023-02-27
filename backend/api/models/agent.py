@@ -17,7 +17,7 @@ class AgentMetaData(BaseModel):
     container_id: str
     container_name: str
     container_image: str
-    container_state: str
+    container_state: str = "unknown"
 
 
 class AgentData(BaseModel):
