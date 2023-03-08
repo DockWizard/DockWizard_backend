@@ -2,7 +2,8 @@ import datetime
 from json import JSONDecodeError
 
 from uuid import UUID
-from fastapi import APIRouter, Request, HTTPException, Response, WebSocket, Depends
+from fastapi import APIRouter, Request, HTTPException, Response, WebSocket, \
+    Depends
 from models.agent import AgentConfig, AgentTSObjetc
 from models.user import User, CreateNewAgentConfig
 import secrets
@@ -20,7 +21,12 @@ router = APIRouter(
 )
 
 # 5 minutes, 30 minutes, 1 hour, 6 hours, 1 day, 1 week, 1 month, 3 months
-valid_time_spans = [5, 30, 60, 60*6, 60*24, 60*24*7, 60*24*7*4, 60*24*7*4*3]
+valid_time_spans = [5, 30, 60, 60 * 6, 60 * 24, 60 * 24 * 7, 60 * 24 * 7 * 4,
+                    60 * 24 * 7 * 4 * 3]
+
+
+class GetAgentSummaryMessage(BaseModel):
+    agent_id: Optional[str]
 
 
 class GetContainerDataMessage(BaseModel):
@@ -28,6 +34,64 @@ class GetContainerDataMessage(BaseModel):
     container_id: Optional[str]
     time_start: Optional[datetime.datetime]
     time_span_minutes: Optional[int]
+
+
+async def get_agent_summary(
+    websocket: WebSocket,
+    user: User,
+    msg: GetAgentSummaryMessage,
+):
+    agent_id = msg.agent_id
+    if not agent_id:
+        await websocket.send_json({"error": "invalid_agent_id"})
+        return
+
+    interval = 60  # minutes
+    pipeline = [
+        {
+            "$match":
+                {
+                    "$expr":
+                        {
+                            "$gt":
+                                [
+                                    "$timestamp", {
+                                    "$dateSubtract":
+                                        {
+                                            "startDate": "$$NOW",
+                                            "unit": "minute",
+                                            "amount": interval
+                                        }
+                                }
+                                ]
+                        },
+                },
+        },
+    ]
+
+    db = get_db_data(websocket)
+    found_agent = False
+    for server in user.servers:
+        if server.collection_id == agent_id:
+            agent_uuid = None
+            try:
+                agent_uuid = UUID(agent_id)
+            except ValueError:
+                await websocket.send_json({"error": "invalid_agent_id"})
+                return
+            cursor = db[agent_uuid.hex].aggregate(pipeline)
+
+            content = "{\"data\": ["
+            for doc in await cursor.to_list(length=100):
+                content += AgentTSObjetc.parse_obj(doc).json() + ","
+            if content[-1] == ",":
+                content = content[:-1]
+            content += "]}"
+            await websocket.send({"type": "websocket.send", "text": content})
+            found_agent = True
+
+    if not found_agent:
+        await websocket.send_json({"error": "agent_not_found"})
 
 
 async def get_container_data(
@@ -60,19 +124,19 @@ async def get_container_data(
     if time_span_minutes == 5:
         hop_interval = 0.1
     elif time_span_minutes == 30:
-        hop_interval = 0.5
+        hop_interval = 0.6
     elif time_span_minutes == 60:
-        hop_interval = 1
+        hop_interval = 1.2
     elif time_span_minutes == 60 * 6:
-        hop_interval = 5
+        hop_interval = 7.2
     elif time_span_minutes == 60 * 24:
         hop_interval = 15
     elif time_span_minutes == 60 * 24 * 7:
-        hop_interval = 60
+        hop_interval = 201.6
     elif time_span_minutes == 60 * 24 * 7 * 4:
-        hop_interval = 60 * 12
+        hop_interval = 806.4
     elif time_span_minutes == 60 * 24 * 7 * 4 * 3:
-        hop_interval = 60 * 24
+        hop_interval = 2419.2
 
     # Create a pipeline that matches timestamp greater than
     # time_span and container_id.
@@ -102,18 +166,18 @@ async def get_container_data(
                                                     "$toDate": "$_id"
                                                 }
                                             }, {
-                                                "$mod":
-                                                    [
-                                                        {
-                                                            "$toLong":
-                                                                {
-                                                                    "$toDate":
-                                                                        "$_id"
-                                                                }
-                                                        },
-                                                        1000 * 60 * hop_interval
-                                                    ]
-                                            }
+                                            "$mod":
+                                                [
+                                                    {
+                                                        "$toLong":
+                                                            {
+                                                                "$toDate":
+                                                                    "$_id"
+                                                            }
+                                                    },
+                                                    1000 * 60 * hop_interval
+                                                ]
+                                        }
                                         ]
                                 }
                         },
@@ -193,8 +257,9 @@ async def get_container_data(
             content = "{\"data\": ["
             for doc in await cursor.to_list(length=100):
                 content += AgentTSObjetc.parse_obj(doc).json() + ","
-            content = content[:-1] + "]"
-            content += f",\"next_time_start\": \"{next_time_span.isoformat()}\"" + "}"
+            if content[-1] == ",":
+                content = content[:-1]
+            content += f"], \"next_time_start\": \"{next_time_span.isoformat()}\"" + "}"
             await websocket.send({"type": "websocket.send", "text": content})
             found_agent = True
 
@@ -212,7 +277,11 @@ async def ws(websocket: WebSocket, user: User = Depends(user_scheme_websocket)):
             msg = await websocket.receive_json()
             match msg.get("type"):
                 case "get_container_data":
-                    await get_container_data(websocket, user, GetContainerDataMessage(**msg))
+                    await get_container_data(websocket, user,
+                                             GetContainerDataMessage(**msg))
+                case "get_agent_summary":
+                    await get_agent_summary(websocket, user,
+                                            GetAgentSummaryMessage(**msg))
                 case _:
                     await websocket.send_json({"error": "invalid_message_type"})
         except JSONDecodeError:
