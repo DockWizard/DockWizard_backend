@@ -238,9 +238,7 @@ async def get_container_data(
             },
         }
     ]
-    next_time_span = datetime.datetime.now() - datetime.timedelta(
-        minutes=time_span_minutes
-    )
+    next_time_span = datetime.datetime.now()
 
     db = get_db_data(websocket)
     found_agent = False

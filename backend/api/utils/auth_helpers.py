@@ -51,9 +51,11 @@ async def user_scheme(request: Request) -> User:
 async def user_scheme_websocket(websocket: WebSocket) -> User:
     auth_header = websocket.headers.get("Authorization")
     if not auth_header:
-        raise WebSocketException(
-            status.WS_1008_POLICY_VIOLATION, "No authorization header"
-        )
+        auth_header = websocket.query_params.get("token")
+        if not auth_header:
+            raise WebSocketException(
+                status.WS_1008_POLICY_VIOLATION, "No authorization header"
+            )
     bearer_token = auth_header.removeprefix("Bearer ")
     token_db = get_db_tokens(websocket)
     token = await token_db.find_one({"bearer_token": bearer_token})
