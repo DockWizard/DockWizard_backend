@@ -3,6 +3,13 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 from typing import List
+from enum import Enum
+
+
+class ContainerState(str, Enum):
+    RUNNING = "running"
+    PAUSED = "paused"
+    STOPPED = "stopped"
 
 
 class AgentMetaData(BaseModel):
@@ -10,6 +17,7 @@ class AgentMetaData(BaseModel):
     container_id: str
     container_name: str
     container_image: str
+    container_state: str = "unknown"
 
 
 class AgentData(BaseModel):
@@ -49,6 +57,8 @@ class AgentConfig(BaseModel):
     update_frequency: int
     containers: List[AgentContainerConfig]
 
+
+# class ContainerCollectionView(BaseModel):
 
 # db
 # -----collection(Finns ServerID)
