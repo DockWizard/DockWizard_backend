@@ -5,11 +5,10 @@ from models.user import User, CreateNewAgentConfig
 from models.auth import CreateUserRequest
 import random
 from datetime import datetime, timedelta
-from database import get_db_data
+from database import get_db_data, get_db_users
 from settings import settings
 import uuid
 from routes.routes_auth import get_password_hash
-from database import get_db_users
 
 router = APIRouter(
     prefix="/database",
@@ -39,7 +38,6 @@ async def cleanup_db_client():
 # Also creates a new collection for the new server, seeding it with 100 Agent Time Series objects.
 async def seed_john(request: Request):
     db = get_db_users(request)
-    db_data = get_db_data(request)
 
     data = {
         "first_name": "john",
@@ -67,9 +65,30 @@ async def seed_john(request: Request):
         db.delete_many({})
     await db.insert_one(new_user_dict)
 
-    alias = {"alias": "John's server"}
-    payload = CreateNewAgentConfig(**alias)
     # Update user with new server config
+
+    await add_server("REST api's", request)
+    await add_server("Microservices", request)
+    await add_server("Talos Cluster", request)
+    await add_server("Utanix node", request)
+    await add_server("gRPC", request)
+    await add_server("Client services", request)
+    await add_server("VPN service", request)
+    await add_server("DNS server", request)
+    await add_server("Name Server", request)
+    await add_server("TD server", request)
+    await add_server("Mail server", request)
+
+    return {200: "Seeded John"}
+
+
+async def add_server(alias: str, request: Request):
+    db_data = get_db_data(request)
+    db = get_db_users(request)
+
+    config = {"alias": alias}
+    payload = CreateNewAgentConfig(**config)
+
     new_server = {
         "collection_id": uuid.uuid4().hex,
         "alias": payload.alias,
@@ -80,8 +99,7 @@ async def seed_john(request: Request):
     new_server = AgentConfig(**new_server)
     print(new_server)
     await db.find_one_and_update(
-        {"username": create_request.username},
-        {"$push": {
+        {"username": "john"}, {"$push": {
             "servers": new_server.dict()
         }}
     )
@@ -96,13 +114,13 @@ async def seed_john(request: Request):
     )
     await db_data[
         new_server.collection_id].create_index([("metadata.container_id", 1)])
-
     data: AgentTSObjetc = {
         "metadata":
             {
                 "container_id": uuid.uuid4().hex,
                 "container_name": "john api container",
                 "container_image": "john/api:latest",
+                "container_state": "running"
             },
         "timestamp": "2023-01-20T09:48:19.655Z",
         "data":
@@ -119,11 +137,19 @@ async def seed_john(request: Request):
     agent_data = AgentTSObjetc(**data)
 
     date = datetime.now()
+    container_names = [
+        "MicroService_ Api", "MicroService_Auth", "MicroService_Users",
+        "MicroService_Orders", "MicroService_Payments"
+    ]
+    # Add 5 containers with 100 data points each
+    for idx in range(5):
+        for i in range(100):
+            agent_data.timestamp = date + timedelta(seconds=i)
+            agent_data.metadata.container_name = container_names[idx]
+            agent_data.data.cpu = random.randint(1, 100)
+            agent_data.data.memory_perc = random.randint(1, 100)
+            await db_data[
+                new_server.collection_id].insert_one(agent_data.dict())
+            print(agent_data.metadata.container_id)
 
-    for i in range(100):
-        agent_data.timestamp = date + timedelta(seconds=i)
         agent_data.metadata.container_id = uuid.uuid4().hex
-        await db_data[new_server.collection_id].insert_one(agent_data.dict())
-        print(agent_data.metadata.container_id)
-
-    return {200: "Seeded John"}

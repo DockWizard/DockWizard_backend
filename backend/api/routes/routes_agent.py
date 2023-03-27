@@ -14,8 +14,7 @@ router = APIRouter(
 @router.post("/send_data")
 async def insert_data(request: Request, agent_object: AgentTSObjectList):
     agent = await agent_scheme(request)
-    mapped = map(lambda x: x.dict(), agent_object.data)
-
-    await agent.data.insert_many(mapped)
+    data = [obj.dict() for obj in agent_object.data]
+    await agent.data.insert_many(data)
 
     return {201: "Created"}
