@@ -1,37 +1,45 @@
-
-###############
-# Does not work
-###############
-
-
-
-
 # import pytest
+# import app as app_module
+
+# from app import app
 # from fastapi.testclient import TestClient
+# from mongomock_motor import AsyncMongoMockClient
 
 
-# from pymongo import MongoClient
-# from settings import settings
-
-
-
+# @pytest.fixture
+# def client():
+#     from app import app
+#     with TestClient(app) as test_client:
+#         yield test_client
 
 # @pytest.mark.asyncio
-# async def test_cleanup_db_data():
-#     from app import app
-#     client = TestClient(app)
+# async def test_cleanup_db_data(client, monkeypatch):
 
-#     # Insert a test document into the "data" database to ensure it gets deleted
-#     mongo_client = MongoClient(settings.MONGO_URI)
-#     data_db = mongo_client["data"]
-#     test_collection = data_db["test_collection"]
-#     test_doc = {"test_key": "test_value"}
-#     test_collection.insert_one(test_doc)
-
-#     # Make the DELETE request to the endpoint
+#     db_data_collection = AsyncMongoMockClient()["data"]["data_collection"]
+#     monkeypatch.setattr(app_module, "db_data", {"db_data_collection": db_data_collection})
+    
+#     sample_data = [
+#         {
+#             "key": "value1"
+#         },
+#         {
+#             "key": "value2"
+#         }
+#     ]
+#     await db_data_collection.insert_many(sample_data)
+    
+        
 #     response = client.delete("/database/data")
 #     assert response.status_code == 200
-#     assert response.json() == {"200": "Deleted DATA database"}
+#     assert response.json() == sample_data
 
-#     # Ensure that the "data" database no longer exists
-#     assert "data" not in mongo_client.list_database_names()
+
+# @pytest.fixture
+# def mock_async_mongo_client():
+#     async def _mock_async_mongo_client():
+#         return AsyncMongoMockClient()
+#     return _mock_async_mongo_client
+
+# @pytest.mark.asyncio
+# async def test_cleanup_db_users(client, mock_async_mongo_client):
+    

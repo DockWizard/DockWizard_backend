@@ -1,13 +1,12 @@
 from fastapi.testclient import TestClient
-import pytest
 from app import app
+from tests.utils import read_text_file
 
 client = TestClient(app)
 
-# @pytest.mark.asyncio
-# def test_get_agent_binary():
-    # response = client.get("/assets/agent")
-    # assert response.status_code == 200
-    # assert response.headers["content-type"] == "application/octet-stream"
-    # assert response.headers["content-disposition"] == "attachment; filename=agent.txt"
-    # assert response.content == b"assets/agent.txt" 
+def test_get_agent_binary():
+    response = client.get("/assets/agent")
+    file = read_text_file("assets/agent.txt")
+    assert response.status_code == 200
+    assert response.content == file
+    assert response.headers["content-type"] == "application/octet-stream"

@@ -1,11 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from utils.auth_helpers import get_password_hash
 from tests.utils import add_test_user
-from models.user import User
 import app as app_module
 from mongomock_motor import AsyncMongoMockClient
-from database import get_db_users
 
 
 
@@ -31,6 +28,33 @@ async def test_login(client, monkeypatch):
     assert "bearer_token" in res_json
     assert "expires_at" in res_json
     assert "user_id" in res_json
+
+
+
+
+@pytest.mark.asyncio
+async def test_logout(client, monkeypatch):
+
+    collection = await add_test_user()
+    monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
+
+    token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
+    monkeypatch.setattr(app_module.app, "db_tokens", {"token_data": token_collection})
+
+    #login
+    response = client.post("/auth/login", json={"username": "test_user", "password": "password"})
+    res_json = response.json()
+    token = res_json["bearer_token"]
+
+    #logout
+    response = client.post("/auth/logout")
+    assert response.status_code == 400
+
+    response = client.post("/auth/logout",
+                           headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    
+
 
 
 @pytest.mark.asyncio

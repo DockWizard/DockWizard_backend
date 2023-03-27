@@ -15,3 +15,8 @@ async def add_test_user():
     await collection.insert_one(user_data)
 
     return collection
+
+def read_text_file(file_path):
+    with open(file_path, "rb") as file:
+        file_contents = file.read()
+    return file_contents
