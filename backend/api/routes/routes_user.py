@@ -16,7 +16,6 @@ router = APIRouter(
 async def get_me(user: User = Depends(user_scheme)):
     return user
 
-<<<<<<< HEAD
 @router.get("/{username}")
 async def get_user(username: str, request: Request):
     db = get_db_users(request)
@@ -24,7 +23,6 @@ async def get_user(username: str, request: Request):
     if not user:
         raise HTTPException(404, "User could not be found")
     return User(**user)
-=======
 
 @router.put("/edit")
 async def edit_user(
@@ -60,4 +58,3 @@ async def edit_user(
     if not retval:
         raise HTTPException(400, "Could not update user")
     return Response(status_code=200)
->>>>>>> contanerView
