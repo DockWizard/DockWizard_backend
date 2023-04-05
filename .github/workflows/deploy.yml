@@ -1,8 +1,8 @@
 name: Build and Deploy
 
 on:
-  release:
-    types: [ "created" ]
+  push:
+    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -39,6 +39,6 @@ jobs:
         mv linux-amd64/helm ./helm
         chmod +x ./helm
 
-        echo $KUBECONFIG > /tmp/kubeconfig
-        export KUBECONFIG=/tmp/kubeconfig
+        echo $KUBECONFIG > ./kubeconfig
+        export KUBECONFIG=$(pwd)/kubeconfig
         ./helm upgrade --install --namespace dockwizard -f deploy/dockwizard-backend/values.yaml dockwizard-backend ./deploy/dockwizard-backend --set image.tag=${{ env.tag }}
