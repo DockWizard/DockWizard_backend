@@ -39,6 +39,7 @@ jobs:
         mv linux-amd64/helm ./helm
         chmod +x ./helm
 
-        echo $KUBECONFIG > ./kubeconfig
-        export KUBECONFIG=$(pwd)/kubeconfig
+        mkdir -p ~/.kube
+        echo $KUBECONFIG > ~/.kube/config
+        chmod 600 ~/.kube/config
         ./helm upgrade --install --namespace dockwizard -f deploy/dockwizard-backend/values.yaml dockwizard-backend ./deploy/dockwizard-backend --set image.tag=${{ env.tag }}
