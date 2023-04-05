@@ -26,11 +26,6 @@ jobs:
     - name: Log into GHCR
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
     
-    - name: Install dependencies
-      run: |
-        curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /usr/bin/kubectl
-        chmod +x /usr/bin/kubectl
-    
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
@@ -40,7 +35,10 @@ jobs:
     
     - name: Deploy to K8s
       run: |
+        curl -L "https://get.helm.sh/helm-v3.11.2-linux-amd64.tar.gz" -o - | tar xvz
+        mv linux-amd64/helm ./helm
+        chmod +x ./helm
+
         echo $KUBECONFIG > /tmp/kubeconfig
         export KUBECONFIG=/tmp/kubeconfig
-        helm upgrade --install --namespace dockwizard -f deploy/dockwizard-backend/values.yaml dockwizard-backend ./deploy/dockwizard-backend --set image.tag=${{ env.tag }}
-
+        ./helm upgrade --install --namespace dockwizard -f deploy/dockwizard-backend/values.yaml dockwizard-backend ./deploy/dockwizard-backend --set image.tag=${{ env.tag }}
