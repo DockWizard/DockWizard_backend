@@ -31,7 +31,7 @@ jobs:
       with:
         push: true
         context: backend/api
-        tags: ghcr.io/DockWizard/backend:${{ env.tag }}
+        tags: ghcr.io/dockwizard/backend:${{ env.tag }}
     
     - name: Deploy to K8s
       run: |
