@@ -217,9 +217,7 @@ async def test_get_container_data(client, monkeypatch):
                                 }
                            )
     res_json = response.json()
-    token = res_json["bearer_token"]
-
-    # create some test data
+    token = res_json["bearer_token"]#add test data
     agent_data = [
         AgentTSObjetc(
             metadata={
@@ -237,8 +235,68 @@ async def test_get_container_data(client, monkeypatch):
                 "io_read": 50,
                 "io_write": 50,
                 "healthcheck": True
-            })
+            }
+            )
     ]
+    find_obj = [obj.dict() for obj in agent_data]
+    collection_id = uuid.uuid4().hex
+    data_collection = AsyncMongoMockClient()["data"][collection_id]
+    await data_collection.insert_many(find_obj)
+    monkeypatch.setattr(app_module.app, "db_data", {collection_id: data_collection})
+
+    # Update the test user's server list to include the new collection_id
+    test_user = await app_module.app.db_users["user_data"].find_one({"username": "test_user"})
+    test_user_obj = User(**test_user)
+    if len(test_user_obj.servers) > 0:
+        test_user_obj.servers[0].collection_id = collection_id
+    else:
+        new_server = AgentConfig(
+            id=uuid.uuid4().hex,
+            alias="test_server",
+            collection_id=collection_id,
+            api_key="test_api_key",
+            update_frequency=5,
+            containers=[]
+        )
+        test_user_obj.servers.append(new_server)
+    await app_module.app.db_users["user_data"].replace_one({"username": "test_user"}, test_user_obj.dict(by_alias=True))
+
+
+
+    # define test data
+    container_id = "1234"
+    time_span_minutes = 10
+
+
+
+    response = client.get(
+        f"/agent_data/data/{collection_id}/containers/{container_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"time_span_minutes": time_span_minutes}
+    )
+    print(response.json())
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+
+
+# @pytest.mark.asyncio
+# async def test_get_agent_summary(client, monkeypatch):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
