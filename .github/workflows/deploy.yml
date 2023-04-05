@@ -39,7 +39,6 @@ jobs:
         mv linux-amd64/helm ./helm
         chmod +x ./helm
 
-        mkdir -p ~/.kube
-        echo $KUBECONFIG > ~/.kube/config
-        chmod 600 ~/.kube/config
+        echo "${{ secrets.KUBERNETES_SECRET }}" > /tmp/kubeconfig
+        export KUBECONFIG=/tmp/kubeconfig
         ./helm upgrade --install --namespace dockwizard -f deploy/dockwizard-backend/values.yaml dockwizard-backend ./deploy/dockwizard-backend --set image.tag=${{ env.tag }}
