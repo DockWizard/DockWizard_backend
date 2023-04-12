@@ -16,6 +16,11 @@ async def add_test_user():
 
     return collection
 
+async def remove_test_user():
+    collection = AsyncMongoMockClient()["users"]["user_data"]
+    await collection.delete_one({"username": "test_user"})
+
+    
 def read_text_file(file_path):
     with open(file_path, "rb") as file:
         file_contents = file.read()
