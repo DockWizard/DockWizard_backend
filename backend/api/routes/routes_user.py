@@ -12,20 +12,17 @@ router = APIRouter(
     }},
 )
 
-
-@router.get("/")
-async def get_user(username: str, request: Request):
-    db = get_db_users(request)
-    user = db.find_one({"username": username})
-    if not user:
-        raise HTTPException(404, "User could not be found")
-    return User(**user)
-
-
 @router.get("/me", response_model=User)
 async def get_me(user: User = Depends(user_scheme)):
     return user
 
+@router.get("/{username}")
+async def get_user(username: str, request: Request):
+    db = get_db_users(request)
+    user = await db.find_one({"username": username})
+    if not user:
+        raise HTTPException(404, "User could not be found")
+    return User(**user)
 
 @router.put("/edit")
 async def edit_user(

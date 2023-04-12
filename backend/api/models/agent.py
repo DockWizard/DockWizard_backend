@@ -50,7 +50,7 @@ class AgentContainerConfig(BaseModel):
 
 
 class AgentConfig(BaseModel):
-    _id: uuid.UUID = Field(default_factory=uuid.uuid4, alias="id")
+    _id: str = Field(alias="id")
     alias: str
     collection_id: str
     api_key: str

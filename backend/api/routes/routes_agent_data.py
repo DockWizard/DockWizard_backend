@@ -382,7 +382,7 @@ async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
             "containers": []
         }
         new_server = AgentConfig(**new_server)
-        print(new_server)
+        print(f"new server: {new_server}")
         await db_users.find_one_and_update(
             {"username": user.username},
             {"$push": {
