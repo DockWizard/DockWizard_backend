@@ -10,9 +10,6 @@
 # import uuid
 # import datetime
 
-
-
-
 # @pytest.fixture
 # def client():
 #     from app import app
@@ -26,72 +23,89 @@
 #     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
 #     token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
-#     monkeypatch.setattr(app_module.app, "db_tokens", {"token_data": token_collection})
+#     monkeypatch.setattr(
+#         app_module.app, "db_tokens", {"token_data": token_collection}
+#     )
 
+#     #login and get token
 #     response = client.post(
-#         "/auth/login",
-#         json={
-#         "username": "test_user",
-#         "password": "password",
-#         })
+#         "/auth/login", json={
+#             "username": "test_user",
+#             "password": "password"
+#         }
+#     )
 #     res_json = response.json()
-#     print(res_json)
 #     token = res_json["bearer_token"]
 
-#     # add a server to the user
-#     new_server = AgentConfig(
+#     test_agent = AgentConfig(
 #         id=uuid.uuid4().hex,
-#         alias="test_server",
+#         alias="test_agent",
 #         collection_id=uuid.uuid4().hex,
 #         api_key="test_api_key",
 #         update_frequency=10,
 #         containers=[]
 #     )
 
-#     test_user = await app_module.app.db_users["user_data"].find_one({"username": "test_user"})
-#     test_user_obj = User(**test_user)
-#     test_user_obj.servers.append(new_server)
-#     await app_module.app.db_users["user_data"].replace_one({"username": "test_user"}, test_user_obj.dict(by_alias=True))
+#     user = await app_module.app.db_users["user_data"].find_one(
+#         {"username": "test_user"}
+#     )
+#     user_obj = User(**user)
+#     user_obj.servers.append(test_agent)
+#     await app_module.app.db_users["user_data"].replace_one(
+#         {"username": "test_user"}, user_obj.dict(by_alias=True)
+#     )
 
-#     agent_data = [AgentTSObjetc(
-#         metadata={
-#             "container_id": "1234",
-#             "container_name": "test_container",
-#             "container_image": "test_image"
-#         },
-#         timestamp=datetime.datetime(2023, 3, 20, 12, 0, tzinfo=datetime.timezone.utc),
-#         data={
-#             "cpu": 0.5,
-#             "memory_perc": 50,
-#             "memory_tot": 1024,
-#             "total_rx": 100,
-#             "total_tx": 100,
-#             "io_read": 50,
-#             "io_write": 50,
-#             "healthcheck": True
-#         })
+#     async def mock_get_agent(request):
+#         return test_agent
+
+#     monkeypatch.setattr(app_module, "agent_scheme", mock_get_agent)
+
+#     # create a test data collection
+#     test_data_collection = AsyncMongoMockClient(
+#     )["data"]["test_data_collection"]
+#     monkeypatch.setattr(
+#         app_module.app, "db_data",
+#         {"test_data_collection": test_data_collection}
+#     )
+
+#     # create a test data object
+#     test_data = [
+#         {
+#             "metadata":
+#                 {
+#                     "container_id": "1234",
+#                     "container_name": "test_container",
+#                     "container_image": "test_image"
+#                 },
+#             "timestamp": "2023-03-20T12:00.00Z",
+#             "data":
+#                 {
+#                     "cpu": 0.5,
+#                     "memory_perc": 50,
+#                     "memory_tot": 1024,
+#                     "total_rx": 100,
+#                     "total_tx": 100,
+#                     "io_read": 50,
+#                     "io_write": 50,
+#                     "healthcheck": True
+#                 }
+#         }
 #     ]
-    
 
-    
-
-#     agent_data_list = AgentTSObjectList(data=agent_data)
-
-
-#     response = client.post("/agent/send_data",
-#                            headers={"Authorization": f"Bearer {token}"},
-#                             json=agent_data_list.dict()
-#                             )
-    
+#     response = client.post(
+#         "/agent/send_data",
+#         headers={"Authorization": f"Bearer {token}"},
+#         json={"data": test_data}
+#     )
+#     print(response.json())
 #     assert response.status_code == 201
 #     assert response.json() == {201: "Created"}
 
-#     test_user = await app_module.app.db_users["user_data"].find_one({"username": "test_user"})
-#     test_user_obj = User(**test_user)
-#     collection_id = test_user_obj.servers[0].collection_id
-#     data_collection = app_module.app.db_data[collection_id]
-#     db_data = await data_collection.find_one()
-#     db_data_list = db_data["data"]
-#     assert db_data_list[0] == agent_data[0].dict()
+#     # check if the data was inserted
+#     inserted_data = await test_data_collection.find([]).to_list(length=None)
+#     assert len(inserted_data) == len(test_data)
 
-    
+#     for data_item, test_data_item in zip(inserted_data, test_data):
+#         assert data_item["metadata"] == test_data_item["metadata"]
+#         assert data_item["timestamp"] == test_data_item["timestamp"]
+#         assert data_item["data"] == test_data_item["data"]

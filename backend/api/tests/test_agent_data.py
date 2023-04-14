@@ -797,6 +797,23 @@ async def test_regenerate_api_key(client, monkeypatch):
         }}
     )
 
+    # get users info
+    user = await app_module.app.db_users["user_data"].find_one(
+        {"username": "test_user"}
+    )
+    user_obj = User(**user)
+
+    # find the agent to update and change its api key
+    for server in user_obj.servers:
+        if server.collection_id == test_agent.collection_id:
+            server.api_key = "new_api_key"
+            break
+
+    # update users server list
+    await app_module.app.db_users["user_data"].replace_one(
+        {"username": "test_user"}, user_obj.dict(by_alias=True)
+    )
+
     # regenerate api key for agent
     response = client.get(
         f"/agent_data/config/regenerate_api_key/{test_agent.collection_id}",
