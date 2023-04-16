@@ -510,8 +510,13 @@ async def test_delete_container_data(client, monkeypatch):
 #             "password": "password"
 #         }
 #     )
+
 #     res_json = response.json()
 #     token = res_json["bearer_token"]
+
+#     data_collection = AsyncMongoMockClient()["data"]
+
+#     monkeypatch.setattr(app_module.app, "db_data", data_collection)
 
 #     # configure a new agent
 #     new_agent_alias = "new_test_agent"
@@ -520,6 +525,7 @@ async def test_delete_container_data(client, monkeypatch):
 #         headers={"Authorization": f"Bearer {token}"},
 #         json={"alias": new_agent_alias}
 #     )
+
 #     print(f"print response {response.json()}")
 #     assert response.status_code == 200
 
@@ -710,55 +716,59 @@ async def test_update_agent(client, monkeypatch):
 
 
 # fails
-# @pytest.mark.asyncio
-# async def test_delete_agent(client, monkeypatch):
+@pytest.mark.asyncio
+async def test_delete_agent(client, monkeypatch):
 
-#     collection = await add_test_user()
-#     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
+    collection = await add_test_user()
+    monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
-#     token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
-#     monkeypatch.setattr(
-#         app_module.app, "db_tokens", {"token_data": token_collection}
-#     )
+    token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
+    monkeypatch.setattr(
+        app_module.app, "db_tokens", {"token_data": token_collection}
+    )
 
-#     # login
-#     response = client.post(
-#         "/auth/login", json={
-#             "username": "test_user",
-#             "password": "password"
-#         }
-#     )
-#     res_json = response.json()
-#     token = res_json["bearer_token"]
+    # login
+    response = client.post(
+        "/auth/login", json={
+            "username": "test_user",
+            "password": "password"
+        }
+    )
+    res_json = response.json()
+    token = res_json["bearer_token"]
 
-#     # add test agent to the user
-#     test_agent = AgentConfig(
-#         alias="test_agent",
-#         collection_id=uuid.uuid4().hex,
-#         api_key="test_api_key",
-#         update_frequency=5,
-#         containers=[]
-#     )
-#     await app_module.app.db_users["user_data"].find_one_and_update(
-#         {"username": "test_user"},
-#         {"$push": {
-#             "servers": test_agent.dict(by_alias=True)
-#         }}
-#     )
+    data_collection = AsyncMongoMockClient()["data"]
 
-#     # delete agent
-#     response = client.delete(
-#         f"/agent_data/config/{test_agent.collection_id}",
-#         headers={"Authorization": f"Bearer {token}"}
-#     )
-#     assert response.status_code == 200
+    monkeypatch.setattr(app_module.app, "db_data", data_collection)
 
-#     # get agent list
-#     response = client.get(
-#         "/agent_data/agents", headers={"Authorization": f"Bearer {token}"}
-#     )
-#     agents = [AgentConfig(**agent) for agent in response.json()]
-#     assert test_agent not in agents
+    # add test agent to the user
+    test_agent = AgentConfig(
+        alias="test_agent",
+        collection_id=uuid.uuid4().hex,
+        api_key="test_api_key",
+        update_frequency=5,
+        containers=[]
+    )
+    await app_module.app.db_users["user_data"].find_one_and_update(
+        {"username": "test_user"},
+        {"$push": {
+            "servers": test_agent.dict(by_alias=True)
+        }}
+    )
+
+    # delete agent
+    response = client.delete(
+        f"/agent_data/config/{test_agent.collection_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+
+    # get agent list
+    response = client.get(
+        "/agent_data/agents", headers={"Authorization": f"Bearer {token}"}
+    )
+    agents = [AgentConfig(**agent) for agent in response.json()]
+    assert test_agent not in agents
 
 
 @pytest.mark.asyncio

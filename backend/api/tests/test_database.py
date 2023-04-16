@@ -20,7 +20,7 @@ def client():
 # @pytest.mark.asyncio
 # async def test_cleanup_db_data(client, monkeypatch):
 
-#     mongo_client = AsyncIOMotorClient(settings.MONGO_URI)
+#     mongo_client = AsyncMongoMockClient()
 #     db = mongo_client["data"]
 
 #     # add some sample data to the database
@@ -51,12 +51,8 @@ def client():
 #     assert await db["test_collection"].count_documents({}) > 0
 
 #     #mock the mongoclient with test database
-#     async def mock_get_mongo_client(request: Request):
-#         return mongo_client
-
-#     monkeypatch.setattr(app_module.app, "get_db_data", mock_get_mongo_client)
-
-#     response = await mongo_client.delete("/database/data")
+#     monkeypatch.setattr(app_module.app, "db_data", db)
+#     response = await client.delete("/database/data")
 #     assert response.status_code == 200
 #     assert response.json() == {200: "Deleted DATA database"}
 

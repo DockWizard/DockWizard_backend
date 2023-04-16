@@ -351,7 +351,7 @@ async def delete_container_data(
     user: User = await user_scheme(request)
     for server in user.servers:
         if server.collection_id == collection_id:
-            db[UUID(collection_id).hex].delete_many(
+            await db[UUID(collection_id).hex].delete_many(
                 {"metadata.container_id": container_id}
             )
             return Response(status_code=200)
@@ -399,11 +399,13 @@ async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
                 "granularity": "seconds"
             }
         )
+        print("hfeuigfuerhferiheuiefhuierh")
         await db_data[new_server.collection_id].create_index(
             [("metadata.container_id", 1)]
         )
         return new_server
     except Exception as exc:
+        print(str(exc))
         return {400: "Bad request", "error": str(exc)}
 
 
