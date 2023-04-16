@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 from mongomock_motor import AsyncMongoMockClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from settings import settings
+from fastapi import Request
+from database import get_db_data, get_db_users
 
 
 @pytest.fixture
@@ -60,3 +62,35 @@ def client():
 
 #     # check that the DATA database is deleted
 #     assert "data" not in await mongo_client.list_database_names()
+
+# @pytest.mark.asyncio
+# async def test_cleanup_db_client(client, monkeypatch):
+
+#     client = AsyncIOMotorClient(settings.MONGO_URI)
+#     db = client["users"]
+
+#     # add some sample data to the database
+#     test_data = {
+#         "username": "test_user",
+#         "email": "test@test.com",
+#         "hashed_password": "test_password",
+#         "servers": []
+#     }
+#     await db["user_data"].insert_one(test_data)
+
+#     # check that the data is in the database
+#     assert "users" in await client.list_database_names()
+#     assert await db["user_data"].count_documents({}) > 0
+
+#     #mock the mongoclient with test database
+#     async def mock_get_mongo_client(request: Request):
+#         return db
+
+#     monkeypatch.setattr(app_module.app, "get_db_users", mock_get_mongo_client)
+
+#     response = await client.delete("/database/users")
+#     assert response.status_code == 200
+#     assert response.json() == {200: "Deleted CLIENT database"}
+
+#     # check that the CLIENT database is deleted
+#     assert "users" not in await client.list_database_names()
