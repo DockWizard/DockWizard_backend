@@ -27,7 +27,6 @@ def client():
 
 @pytest.mark.asyncio
 async def test_get_container_data(client, monkeypatch):
-
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -87,6 +86,7 @@ async def test_get_container_data(client, monkeypatch):
         assert "next_time_start" in data
 
 
+@pytest.mark.asyncio
 async def test_get_agent_summary(client, monkeypatch):
 
     collection = await add_test_user()
@@ -131,10 +131,9 @@ async def test_get_agent_summary(client, monkeypatch):
 
     client.headers = {"Authorization": f"Bearer {token}"}
     with client.websocket_connect("/ws/") as websocket:
-
         message = {
             "type": "get_agent_summary",
-            "agent_id": id,
+            "agent_id": None,
         }
         websocket.send_json(message)
 
@@ -144,10 +143,6 @@ async def test_get_agent_summary(client, monkeypatch):
         assert "data" not in data
         assert "error" in data
         assert data["error"] == "invalid_agent_id"
-
-
-
-
 
 
 @pytest.mark.asyncio

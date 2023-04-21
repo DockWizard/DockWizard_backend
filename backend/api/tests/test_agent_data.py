@@ -7,6 +7,7 @@ from tests.utils import add_test_user
 from models.agent import AgentTSObjetc, AgentConfig, AgentContainerConfig
 from mongomock_motor import AsyncMongoMockClient
 from models.user import User, CreateNewAgentConfig
+from routes import routes_agent_data
 import uuid
 import datetime
 
@@ -492,54 +493,55 @@ async def test_delete_container_data(client, monkeypatch):
 
 
 # fails
-# @pytest.mark.asyncio
-# async def test_config_new_agent(client, monkeypatch):
+@pytest.mark.asyncio
+async def test_config_new_agent(client, monkeypatch):
+    collection = await add_test_user()
+    monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
-#     collection = await add_test_user()
-#     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
+    token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
+    monkeypatch.setattr(
+        app_module.app, "db_tokens", {"token_data": token_collection}
+    )
 
-#     token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
-#     monkeypatch.setattr(
-#         app_module.app, "db_tokens", {"token_data": token_collection}
-#     )
+    # login
+    response = client.post(
+        "/auth/login", json={
+            "username": "test_user",
+            "password": "password"
+        }
+    )
 
-#     # login
-#     response = client.post(
-#         "/auth/login", json={
-#             "username": "test_user",
-#             "password": "password"
-#         }
-#     )
+    res_json = response.json()
+    token = res_json["bearer_token"]
 
-#     res_json = response.json()
-#     token = res_json["bearer_token"]
+    data_collection = AsyncMongoMockClient()["data"]
 
-#     data_collection = AsyncMongoMockClient()["data"]
+    monkeypatch.setattr(app_module.app, "db_data", data_collection)
 
-#     monkeypatch.setattr(app_module.app, "db_data", data_collection)
+    routes_agent_data.should_use_timeseries_options = False
 
-#     # configure a new agent
-#     new_agent_alias = "new_test_agent"
-#     response = client.post(
-#         "/agent_data/config_new_agent",
-#         headers={"Authorization": f"Bearer {token}"},
-#         json={"alias": new_agent_alias}
-#     )
+    # configure a new agent
+    new_agent_alias = "new_test_agent"
+    response = client.post(
+        "/agent_data/config_new_agent",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"alias": new_agent_alias}
+    )
 
-#     print(f"print response {response.json()}")
-#     assert response.status_code == 200
+    print(f"print response {response.json()}")
+    assert response.status_code == 200
 
-#     # check if the new agent is added to the user's server list
-#     test_user = await app_module.app.db_users["user_data"].find_one(
-#         {"username": "test_user"}
-#     )
-#     test_user_obj = User(**test_user)
-#     new_agent_found = False
-#     for server in test_user_obj.servers:
-#         if server.alias == new_agent_alias:
-#             new_agent_found = True
-#             break
-#     assert new_agent_found
+    # check if the new agent is added to the user's server list
+    test_user = await app_module.app.db_users["user_data"].find_one(
+        {"username": "test_user"}
+    )
+    test_user_obj = User(**test_user)
+    new_agent_found = False
+    for server in test_user_obj.servers:
+        if server.alias == new_agent_alias:
+            new_agent_found = True
+            break
+    assert new_agent_found
 
 
 @pytest.mark.asyncio

@@ -17,6 +17,19 @@ router = APIRouter(
     }},
 )
 
+# Only tests should override this
+should_use_timeseries_options = True
+
+
+def get_timeseries_options():
+    if not should_use_timeseries_options:
+        return None
+    return {
+        "timeField": "timestamp",
+        "metaField": "metadata",
+        "granularity": "seconds"
+    }
+
 
 @router.get("/data/{collection_id}")
 # Will return all documents in a collection(server with collection id)
@@ -390,14 +403,15 @@ async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
             }}
         )
 
+        create_kwargs = {}
+        t_options = get_timeseries_options()
+        if t_options:
+            create_kwargs["timeseries"] = t_options
+
         # Create new collection for new agent
         await db_data.create_collection(
             new_server.collection_id,
-            timeseries={
-                "timeField": "timestamp",
-                "metaField": "metadata",
-                "granularity": "seconds"
-            }
+            **create_kwargs,
         )
         print("hfeuigfuerhferiheuiefhuierh")
         await db_data[new_server.collection_id].create_index(
