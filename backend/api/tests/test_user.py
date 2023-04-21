@@ -16,6 +16,8 @@ def client():
 
 @pytest.mark.asyncio
 async def test_get_user(client, monkeypatch):
+
+    # add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -23,15 +25,16 @@ async def test_get_user(client, monkeypatch):
     monkeypatch.setattr(app_module.app, "db_tokens", {
                         "token_data": token_collection})
 
+    # login to get token
     response = client.post(
         "/auth/login", json={"username": "test_user", "password": "password"})
-    print(response.json())
     res_json = response.json()
     token = res_json["bearer_token"]
 
     _response = client.get(
         "/user/test_user", headers={"Authorization": f"Bearer {token}"})
     res_json = _response.json()
+    # check response contains the correct data
     assert res_json["username"] == "test_user"
     assert res_json["email"] == "test@test.com"
     assert res_json["first_name"] == "test"
@@ -43,6 +46,8 @@ async def test_get_user(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_me(client):
+
+    # add test user
     test_user = User(**{
         "username": "test_user",
         "email": "test@test.com",
@@ -54,7 +59,8 @@ async def test_get_me(client):
 
     response = client.get("/user/me")
     res_json = response.json()
-    print(res_json)
+
+    # check response contains the correct data
     assert res_json["username"] == "test_user"
     assert res_json["email"] == "test@test.com"
     assert res_json["first_name"] == "test"

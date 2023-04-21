@@ -5,7 +5,7 @@ import app as app_module
 import uuid
 
 from models.user import User
-from models.agent import AgentConfig, AgentTSObjetc
+from models.agent import AgentConfig
 from mongomock_motor import AsyncMongoMockClient
 from tests.utils import add_test_user, remove_test_user
 from fastapi.testclient import TestClient
@@ -27,6 +27,8 @@ def client():
 
 @pytest.mark.asyncio
 async def test_get_container_data(client, monkeypatch):
+
+    # add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -45,6 +47,7 @@ async def test_get_container_data(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
+    # define test agent
     id = uuid.uuid4().hex
     test_agent = AgentConfig(
         id=uuid.uuid4().hex,
@@ -54,7 +57,7 @@ async def test_get_container_data(client, monkeypatch):
         update_frequency=10,
         containers=[]
     )
-
+    # add test agent to test user
     user = await app_module.app.db_users["user_data"].find_one(
         {"username": "test_user"}
     )
@@ -89,6 +92,7 @@ async def test_get_container_data(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_agent_summary(client, monkeypatch):
 
+    # add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -107,6 +111,7 @@ async def test_get_agent_summary(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
+    # define test agent
     id = uuid.uuid4().hex
     test_agent = AgentConfig(
         id=uuid.uuid4().hex,
@@ -117,6 +122,7 @@ async def test_get_agent_summary(client, monkeypatch):
         containers=[]
     )
 
+    # add test agent to test user
     user = await app_module.app.db_users["user_data"].find_one(
         {"username": "test_user"}
     )
@@ -148,6 +154,7 @@ async def test_get_agent_summary(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_ws_invalid_message_type(client, monkeypatch):
 
+    # add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -166,6 +173,7 @@ async def test_ws_invalid_message_type(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
+    # define test agent
     id = uuid.uuid4().hex
     test_agent = AgentConfig(
         id=uuid.uuid4().hex,
@@ -176,6 +184,7 @@ async def test_ws_invalid_message_type(client, monkeypatch):
         containers=[]
     )
 
+    # add test agent to test user
     user = await app_module.app.db_users["user_data"].find_one(
         {"username": "test_user"}
     )

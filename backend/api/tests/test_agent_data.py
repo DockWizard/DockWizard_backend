@@ -1,15 +1,14 @@
 import pytest
 import app as app_module
-
-from app import app
-from fastapi.testclient import TestClient
-from tests.utils import add_test_user
-from models.agent import AgentTSObjetc, AgentConfig, AgentContainerConfig
-from mongomock_motor import AsyncMongoMockClient
-from models.user import User, CreateNewAgentConfig
-from routes import routes_agent_data
 import uuid
 import datetime
+
+from fastapi.testclient import TestClient
+from tests.utils import add_test_user
+from models.agent import AgentTSObjetc, AgentConfig
+from mongomock_motor import AsyncMongoMockClient
+from models.user import User
+from routes import routes_agent_data
 
 
 @pytest.fixture
@@ -40,6 +39,7 @@ async def test_get_agent_data(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
+    # Define test agent data
     agent_data = [
         AgentTSObjetc(
             metadata={
@@ -62,6 +62,7 @@ async def test_get_agent_data(client, monkeypatch):
             }
         )
     ]
+    # Add test agent data to the database
     find_obj = [obj.dict() for obj in agent_data]
     collection_id = uuid.uuid4().hex
     data_collection = AsyncMongoMockClient()["data"][collection_id]
@@ -75,6 +76,7 @@ async def test_get_agent_data(client, monkeypatch):
     test_user = await app_module.app.db_users["user_data"].find_one(
         {"username": "test_user"}
     )
+    # add the collection_id to the test user's server list
     test_user_obj = User(**test_user)
     if len(test_user_obj.servers) > 0:
         test_user_obj.servers[0].collection_id = collection_id
@@ -96,7 +98,7 @@ async def test_get_agent_data(client, monkeypatch):
         f"/agent_data/data/{collection_id}",
         headers={"Authorization": f"Bearer {token}"}
     )
-    print(response.json())
+    # define the expected response
     expedted = [
         {
             'metadata':
@@ -120,7 +122,7 @@ async def test_get_agent_data(client, monkeypatch):
                 }
         }
     ]
-
+    # test the response
     assert response.status_code == 200
     assert response.json() == expedted
 
@@ -128,6 +130,7 @@ async def test_get_agent_data(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_agent_containers(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -146,7 +149,7 @@ async def test_get_agent_containers(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
-    #add test data
+    # define test data
     agent_data = [
         AgentTSObjetc(
             metadata={
@@ -189,6 +192,7 @@ async def test_get_agent_containers(client, monkeypatch):
             }
         )
     ]
+    # Add test data to the database
     find_obj = [obj.dict() for obj in agent_data]
     collection_id = uuid.uuid4().hex
     data_collection = AsyncMongoMockClient()["data"][collection_id]
@@ -218,24 +222,25 @@ async def test_get_agent_containers(client, monkeypatch):
         {"username": "test_user"}, test_user_obj.dict(by_alias=True)
     )
 
+    # Test with invalid collection_id
     response = client.get(
         f"/agent_data/data/{uuid.uuid4().hex}/containers",
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 404
 
+    # Test with valid collection_id
     response = client.get(
         f"/agent_data/data/{collection_id}/containers",
         headers={"Authorization": f"Bearer {token}"}
     )
-    print(response.json())
-
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_get_container_data(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -252,7 +257,9 @@ async def test_get_container_data(client, monkeypatch):
         }
     )
     res_json = response.json()
-    token = res_json["bearer_token"]  #add test data
+    token = res_json["bearer_token"]
+
+    # define test agent data
     agent_data = [
         AgentTSObjetc(
             metadata={
@@ -275,6 +282,7 @@ async def test_get_container_data(client, monkeypatch):
             }
         )
     ]
+    # Add test data to the database
     find_obj = [obj.dict() for obj in agent_data]
     collection_id = uuid.uuid4().hex
     data_collection = AsyncMongoMockClient()["data"][collection_id]
@@ -308,12 +316,12 @@ async def test_get_container_data(client, monkeypatch):
     container_id = "1234"
     time_span_minutes = 10
 
+    # test get data from container id with time span 10 minutes
     response = client.get(
         f"/agent_data/data/{collection_id}/containers/{container_id}",
         headers={"Authorization": f"Bearer {token}"},
         params={"time_span_minutes": time_span_minutes}
     )
-    print(response.json())
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -321,6 +329,7 @@ async def test_get_container_data(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_agent_summary(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -362,6 +371,7 @@ async def test_get_agent_summary(client, monkeypatch):
             }
         )
     ]
+    # Add test data to the database
     find_obj = [obj.dict() for obj in agent_data]
     collection_id = uuid.uuid4().hex
     data_collection = AsyncMongoMockClient()["data"][collection_id]
@@ -399,7 +409,6 @@ async def test_get_agent_summary(client, monkeypatch):
         headers={"Authorization": f"Bearer {token}"},
         params={"time_span_minutes": time_span_minutes}
     )
-    print(f"print response {response.json()}")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -407,6 +416,7 @@ async def test_get_agent_summary(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_delete_container_data(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -492,9 +502,10 @@ async def test_delete_container_data(client, monkeypatch):
     assert len(remaining_data) == 0
 
 
-# fails
 @pytest.mark.asyncio
 async def test_config_new_agent(client, monkeypatch):
+
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -503,19 +514,18 @@ async def test_config_new_agent(client, monkeypatch):
         app_module.app, "db_tokens", {"token_data": token_collection}
     )
 
-    # login
+    # login and get the bearer token
     response = client.post(
         "/auth/login", json={
             "username": "test_user",
             "password": "password"
         }
     )
-
     res_json = response.json()
     token = res_json["bearer_token"]
 
-    data_collection = AsyncMongoMockClient()["data"]
 
+    data_collection = AsyncMongoMockClient()["data"]
     monkeypatch.setattr(app_module.app, "db_data", data_collection)
 
     routes_agent_data.should_use_timeseries_options = False
@@ -528,7 +538,6 @@ async def test_config_new_agent(client, monkeypatch):
         json={"alias": new_agent_alias}
     )
 
-    print(f"print response {response.json()}")
     assert response.status_code == 200
 
     # check if the new agent is added to the user's server list
@@ -547,6 +556,7 @@ async def test_config_new_agent(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_agents(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -555,7 +565,7 @@ async def test_get_agents(client, monkeypatch):
         app_module.app, "db_tokens", {"token_data": token_collection}
     )
 
-    # login
+    # login and get the bearer token
     response = client.post(
         "/auth/login", json={
             "username": "test_user",
@@ -565,7 +575,7 @@ async def test_get_agents(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
-    # add test agent to the user
+    # add test agent to the user and update the user
     test_agent = AgentConfig(
         id=uuid.uuid4().hex,
         alias="test_agent",
@@ -585,7 +595,6 @@ async def test_get_agents(client, monkeypatch):
     response = client.get(
         "/agent_data/agents", headers={"Authorization": f"Bearer {token}"}
     )
-    print(f"print response {response.json()}")
     assert response.status_code == 200
     agents = response.json()
 
@@ -601,6 +610,7 @@ async def test_get_agents(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_agent(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -609,7 +619,7 @@ async def test_get_agent(client, monkeypatch):
         app_module.app, "db_tokens", {"token_data": token_collection}
     )
 
-    # login
+    # login and get the bearer token
     response = client.post(
         "/auth/login", json={
             "username": "test_user",
@@ -619,7 +629,7 @@ async def test_get_agent(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
-    # add test agent to the user
+    # add test agent to the user and update the user
     test_agent = AgentConfig(
         id=uuid.uuid4().hex,
         alias="test_agent",
@@ -640,7 +650,6 @@ async def test_get_agent(client, monkeypatch):
         f"/agent_data/agents/{test_agent.collection_id}",
         headers={"Authorization": f"Bearer {token}"}
     )
-    print(f"print response {response.json()}")
     assert response.status_code == 200
     agent = AgentConfig(**response.json())
 
@@ -655,6 +664,7 @@ async def test_get_agent(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_update_agent(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -663,7 +673,7 @@ async def test_update_agent(client, monkeypatch):
         app_module.app, "db_tokens", {"token_data": token_collection}
     )
 
-    # login
+    # login and get the bearer token
     response = client.post(
         "/auth/login", json={
             "username": "test_user",
@@ -673,7 +683,7 @@ async def test_update_agent(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
-    # add test agent to the user
+    # add test agent to the user and update the user
     test_agent = AgentConfig(
         alias="test_agent",
         collection_id=uuid.uuid4().hex,
@@ -696,6 +706,8 @@ async def test_update_agent(client, monkeypatch):
         update_frequency=10,
         containers=test_agent.containers
     )
+
+    # put updated agent into test user
     response = client.put(
         f"/agent_data/config/{test_agent.collection_id}",
         headers={"Authorization": f"Bearer {token}"},
@@ -709,6 +721,7 @@ async def test_update_agent(client, monkeypatch):
         headers={"Authorization": f"Bearer {token}"}
     )
 
+    # check if the data is correct
     updated_agent = AgentConfig(**response.json())
     assert updated_agent.alias == updated_agent_config.alias
     assert updated_agent.collection_id == updated_agent_config.collection_id
@@ -717,10 +730,11 @@ async def test_update_agent(client, monkeypatch):
     assert updated_agent.containers == updated_agent_config.containers
 
 
-# fails
+
 @pytest.mark.asyncio
 async def test_delete_agent(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -729,7 +743,7 @@ async def test_delete_agent(client, monkeypatch):
         app_module.app, "db_tokens", {"token_data": token_collection}
     )
 
-    # login
+    # login and get the bearer token
     response = client.post(
         "/auth/login", json={
             "username": "test_user",
@@ -740,10 +754,9 @@ async def test_delete_agent(client, monkeypatch):
     token = res_json["bearer_token"]
 
     data_collection = AsyncMongoMockClient()["data"]
-
     monkeypatch.setattr(app_module.app, "db_data", data_collection)
 
-    # add test agent to the user
+    # add test agent to the user and update the user
     test_agent = AgentConfig(
         alias="test_agent",
         collection_id=uuid.uuid4().hex,
@@ -765,7 +778,7 @@ async def test_delete_agent(client, monkeypatch):
     )
     assert response.status_code == 200
 
-    # get agent list
+    # get agent list and check if the test agent is not in the list
     response = client.get(
         "/agent_data/agents", headers={"Authorization": f"Bearer {token}"}
     )
@@ -776,6 +789,7 @@ async def test_delete_agent(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_regenerate_api_key(client, monkeypatch):
 
+    # Add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -784,7 +798,7 @@ async def test_regenerate_api_key(client, monkeypatch):
         app_module.app, "db_tokens", {"token_data": token_collection}
     )
 
-    # login
+    # login and get the bearer token
     response = client.post(
         "/auth/login", json={
             "username": "test_user",
@@ -794,7 +808,7 @@ async def test_regenerate_api_key(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
-    # add test agent to the user
+    # add test agent to the user and update the user
     test_agent = AgentConfig(
         alias="test_agent",
         collection_id=uuid.uuid4().hex,

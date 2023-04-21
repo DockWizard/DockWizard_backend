@@ -1,13 +1,9 @@
 import pytest
 import app as app_module
 
-from app import app
 from fastapi.testclient import TestClient
 from mongomock_motor import AsyncMongoMockClient
-from motor.motor_asyncio import AsyncIOMotorClient
-from settings import settings
-from fastapi import Request
-from database import get_db_data, get_db_users
+
 
 
 @pytest.fixture
@@ -20,6 +16,7 @@ def client():
 @pytest.mark.asyncio
 async def test_cleanup_db_data(client, monkeypatch):
 
+    # mock the mongoclient with test data
     mongo_client = AsyncMongoMockClient()
     db = mongo_client["data"]
 
@@ -65,6 +62,7 @@ async def test_cleanup_db_data(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_cleanup_db_client(client, monkeypatch):
 
+    # mock the mongoclient with test data
     mongo_client = AsyncMongoMockClient()
     db = mongo_client["users"]
 

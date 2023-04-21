@@ -1,14 +1,14 @@
 import pytest
 import app as app_module
-
-from app import app
-from fastapi.testclient import TestClient
-from tests.utils import add_test_user
-from models.agent import AgentConfig, AgentTSObjectList, AgentTSObjetc
-from mongomock_motor import AsyncMongoMockClient
-from models.user import User
 import uuid
 import datetime
+
+
+from fastapi.testclient import TestClient
+from tests.utils import add_test_user
+from models.agent import AgentConfig
+from mongomock_motor import AsyncMongoMockClient
+from models.user import User
 
 
 @pytest.fixture
@@ -21,6 +21,7 @@ def client():
 @pytest.mark.asyncio
 async def test_insert_data(client, monkeypatch):
 
+    # add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
@@ -39,6 +40,7 @@ async def test_insert_data(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
+    # define test agent
     test_agent = AgentConfig(
         id=uuid.uuid4().hex,
         alias="test_agent",
@@ -48,6 +50,7 @@ async def test_insert_data(client, monkeypatch):
         containers=[]
     )
 
+    # add test agent to test user
     user = await app_module.app.db_users["user_data"].find_one(
         {"username": "test_user"}
     )
@@ -100,7 +103,6 @@ async def test_insert_data(client, monkeypatch):
         headers={"Authorization": "Bearer test_api_key"},
         json={"data": test_data}
     )
-    print(response.json())
     assert response.status_code == 200
     assert response.json() == {"201": "Created"}
 
