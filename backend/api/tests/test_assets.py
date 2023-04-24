@@ -4,6 +4,7 @@ from tests.utils import read_text_file
 
 client = TestClient(app)
 
+
 def test_get_agent_binary():
     response = client.get("/assets/agent")
     # read file from assets folder

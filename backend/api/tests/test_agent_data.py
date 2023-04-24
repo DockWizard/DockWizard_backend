@@ -2,15 +2,14 @@ import pytest
 import app as app_module
 import uuid
 import datetime
-
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient                                        
 from tests.utils import add_test_user
 from models.agent import AgentTSObjetc, AgentConfig
 from mongomock_motor import AsyncMongoMockClient
 from models.user import User
 from routes import routes_agent_data
 
-
+                                        
 @pytest.fixture
 def client():
     from app import app
@@ -524,7 +523,6 @@ async def test_config_new_agent(client, monkeypatch):
     res_json = response.json()
     token = res_json["bearer_token"]
 
-
     data_collection = AsyncMongoMockClient()["data"]
     monkeypatch.setattr(app_module.app, "db_data", data_collection)
 
@@ -728,7 +726,6 @@ async def test_update_agent(client, monkeypatch):
     assert updated_agent.api_key == updated_agent_config.api_key
     assert updated_agent.update_frequency == updated_agent_config.update_frequency
     assert updated_agent.containers == updated_agent_config.containers
-
 
 
 @pytest.mark.asyncio

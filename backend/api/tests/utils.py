@@ -22,10 +22,12 @@ async def add_test_user():
 
     return collection
 
+
 # remove test user function
 async def remove_test_user():
     collection = AsyncMongoMockClient()["users"]["user_data"]
     await collection.delete_one({"username": "test_user"})
+
 
 # read binary file function
 def read_text_file(file_path):

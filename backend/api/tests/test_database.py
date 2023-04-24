@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 from mongomock_motor import AsyncMongoMockClient
 
 
-
 @pytest.fixture
 def client():
     from app import app

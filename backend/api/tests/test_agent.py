@@ -3,7 +3,6 @@ import app as app_module
 import uuid
 import datetime
 
-
 from fastapi.testclient import TestClient
 from tests.utils import add_test_user
 from models.agent import AgentConfig

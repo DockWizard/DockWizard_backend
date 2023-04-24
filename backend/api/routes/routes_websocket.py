@@ -1,5 +1,4 @@
 import datetime
-
 from json import JSONDecodeError
 from uuid import UUID
 from fastapi import APIRouter, WebSocket, Depends

@@ -53,3 +53,5 @@ docs/_build/
 mongodata/
 .env/
 .pytest_cache
+
+.idea
