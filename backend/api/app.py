@@ -1,5 +1,5 @@
 from database import startup_db_client
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from routes import routes_agent, routes_database, routes_auth, routes_agent_data, routes_assets, routes_user, routes_websocket
 from utils.auth_helpers import user_scheme, agent_scheme, user_scheme_websocket
@@ -27,9 +27,10 @@ app.add_middleware(
 async def startup():
     startup_db_client(app)
 
+
 @app.get("/")
 async def root():
-    return {"msg": "Hello World"}
+    return Response(status_code=200, content="k8s OK")
 
 
 app.include_router(
