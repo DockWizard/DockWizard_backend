@@ -5,7 +5,7 @@ from models.user import User, CreateNewAgentConfig
 from models.auth import CreateUserRequest
 import random
 from datetime import datetime, timedelta
-from database import get_db_data, get_db_users
+from database import get_db, get_db_data, get_db_users
 from settings import settings
 import uuid
 from routes.routes_auth import get_password_hash
@@ -20,16 +20,16 @@ router = APIRouter(
 
 
 @router.delete("/data")
-async def cleanup_db_data():
-    db = MongoClient(settings.MONGO_URI)
-    db.drop_database("data")
+async def cleanup_db_data(request: Request):
+    db = get_db(request)
+    await db.drop_database("data")
     return {200: "Deleted DATA database"}
 
 
 @router.delete("/users")
-async def cleanup_db_client():
-    db = MongoClient(settings.MONGO_URI)
-    db.drop_database("users")
+async def cleanup_db_client(request: Request):
+    db = get_db(request)
+    await db.drop_database("users")
     return {200: "Deleted USERS database"}
 
 

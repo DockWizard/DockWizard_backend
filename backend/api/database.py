@@ -10,9 +10,14 @@ def create_db_client():
 
 def startup_db_client(app):
     db = create_db_client()
+    app.db = db
     app.db_data = db.data
     app.db_users = db['users']
     app.db_tokens = db.tokens
+
+
+def get_db(request: Request) -> AsyncIOMotorClient:
+    return request.app.db
 
 
 def get_db_data(request: Request) -> AgnosticDatabase:

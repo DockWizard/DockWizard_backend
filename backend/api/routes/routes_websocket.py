@@ -1,15 +1,12 @@
 import datetime
 from json import JSONDecodeError
-
 from uuid import UUID
-from fastapi import APIRouter, Request, HTTPException, Response, WebSocket, \
-    Depends
-from models.agent import AgentConfig, AgentTSObjetc
-from models.user import User, CreateNewAgentConfig
-import secrets
-from database import get_db_data, get_db_users
+from fastapi import APIRouter, WebSocket, Depends
+from models.agent import AgentTSObjetc
+from models.user import User
+from database import get_db_data
 from utils.auth_helpers import user_scheme_websocket
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
 
 router = APIRouter(

@@ -17,6 +17,19 @@ router = APIRouter(
     }},
 )
 
+# Only tests should override this
+should_use_timeseries_options = True
+
+
+def get_timeseries_options():
+    if not should_use_timeseries_options:
+        return None
+    return {
+        "timeField": "timestamp",
+        "metaField": "metadata",
+        "granularity": "seconds"
+    }
+
 
 @router.get("/data/{collection_id}")
 # Will return all documents in a collection(server with collection id)
@@ -351,7 +364,7 @@ async def delete_container_data(
     user: User = await user_scheme(request)
     for server in user.servers:
         if server.collection_id == collection_id:
-            db[UUID(collection_id).hex].delete_many(
+            await db[UUID(collection_id).hex].delete_many(
                 {"metadata.container_id": container_id}
             )
             return Response(status_code=200)
@@ -390,20 +403,23 @@ async def config_new_agent(request: Request, payload: CreateNewAgentConfig):
             }}
         )
 
+        create_kwargs = {}
+        t_options = get_timeseries_options()
+        if t_options:
+            create_kwargs["timeseries"] = t_options
+
         # Create new collection for new agent
         await db_data.create_collection(
             new_server.collection_id,
-            timeseries={
-                "timeField": "timestamp",
-                "metaField": "metadata",
-                "granularity": "seconds"
-            }
+            **create_kwargs,
         )
+        print("hfeuigfuerhferiheuiefhuierh")
         await db_data[new_server.collection_id].create_index(
             [("metadata.container_id", 1)]
         )
         return new_server
     except Exception as exc:
+        print(str(exc))
         return {400: "Bad request", "error": str(exc)}
 
 

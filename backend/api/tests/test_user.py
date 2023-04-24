@@ -16,22 +16,31 @@ def client():
 
 @pytest.mark.asyncio
 async def test_get_user(client, monkeypatch):
+
+    # add test user
     collection = await add_test_user()
     monkeypatch.setattr(app_module.app, "db_users", {"user_data": collection})
 
     token_collection = AsyncMongoMockClient()["tokens"]["token_data"]
-    monkeypatch.setattr(app_module.app, "db_tokens", {
-                        "token_data": token_collection})
+    monkeypatch.setattr(
+        app_module.app, "db_tokens", {"token_data": token_collection}
+    )
 
+    # login to get token
     response = client.post(
-        "/auth/login", json={"username": "test_user", "password": "password"})
-    print(response.json())
+        "/auth/login", json={
+            "username": "test_user",
+            "password": "password"
+        }
+    )
     res_json = response.json()
     token = res_json["bearer_token"]
 
     _response = client.get(
-        "/user/test_user", headers={"Authorization": f"Bearer {token}"})
+        "/user/test_user", headers={"Authorization": f"Bearer {token}"}
+    )
     res_json = _response.json()
+    # check response contains the correct data
     assert res_json["username"] == "test_user"
     assert res_json["email"] == "test@test.com"
     assert res_json["first_name"] == "test"
@@ -43,18 +52,23 @@ async def test_get_user(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_me(client):
-    test_user = User(**{
-        "username": "test_user",
-        "email": "test@test.com",
-        "first_name": "test",
-        "surname": "testesen",
-        "servers": []
-    })
+
+    # add test user
+    test_user = User(
+        **{
+            "username": "test_user",
+            "email": "test@test.com",
+            "first_name": "test",
+            "surname": "testesen",
+            "servers": []
+        }
+    )
     client.app.dependency_overrides[user_scheme] = lambda: test_user
 
     response = client.get("/user/me")
     res_json = response.json()
-    print(res_json)
+
+    # check response contains the correct data
     assert res_json["username"] == "test_user"
     assert res_json["email"] == "test@test.com"
     assert res_json["first_name"] == "test"
