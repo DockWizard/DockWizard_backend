@@ -58,6 +58,9 @@ jobs:
           push: true
           context: backend/api
           tags: ghcr.io/dockwizard/backend:${{ env.tag }}
+          build-args: |
+            MONGO_ROOT_PASSWORD=${{secrets.MONGO_ROOT_PASSWORD}}
+            NODE_ENV=production
 
       - name: Deploy to K8s
         run: |
