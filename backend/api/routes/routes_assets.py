@@ -14,7 +14,7 @@ router = APIRouter(
 
 @router.get("/agent")
 async def get_agent_binary(request: Request):
-    file_path = "assets/agent.txt"
+    file_path = "assets/agent"
     return FileResponse(
         path=file_path,
         filename=file_path,
