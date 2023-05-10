@@ -17,6 +17,6 @@ async def get_agent_binary(request: Request):
     file_path = "assets/dockwizard-agent"
     return FileResponse(
         path=file_path,
-        filename=file_path,
+        filename="dockwizard-agent",
         media_type="application/octet-stream"
     )
