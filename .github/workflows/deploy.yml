@@ -60,7 +60,7 @@ jobs:
 
       - name: Download latest agent
         run: |
-          curl -o /tmp/latest.tar.gz -L -H "Authorization: token ${{ secrets.SERVICE_ACCOUNT_KEY }}" "https://api.github.com/repos/DockWizard/DockWizard_agent/releases/assets/${{ steps.agent.outputs.id }}"
+          curl -o /tmp/latest.tar.gz -L -H "Authorization: token ${{ secrets.SERVICE_ACCOUNT_KEY }}" "https://api.github.com/repos/DockWizard/DockWizard_agent/releases/assets/DockWizard_agent_0.0.6_linux_amd64.tar.gz"
           tar xvf /tmp/latest.tar.gz
           mv dockwizard-agent ./backend/api/assets/agent
 
