@@ -52,17 +52,17 @@ jobs:
       - name: Log into GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - id: agent
-        uses: pozetroninc/github-action-get-latest-release@master
-        with:
-          repository: DockWizard/DockWizard_agent
-          token: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+      # - id: agent
+      #   uses: pozetroninc/github-action-get-latest-release@master
+      #   with:
+      #     repository: DockWizard/DockWizard_agent
+      #     token: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 
-      - name: Download latest agent
-        run: |
-          curl -o /tmp/latest.tar.gz -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://github.com/DockWizard/DockWizard_agent/releases/download/v0.0.6/DockWizard_agent_0.0.6_linux_amd64.tar.gz"
-          tar xvf /tmp/latest.tar.gz
-          mv dockwizard-agent ./backend/api/assets/agent
+      # - name: Download latest agent
+      #   run: |
+      #     curl -o /tmp/latest.tar.gz -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://github.com/DockWizard/DockWizard_agent/releases/download/v0.0.6/DockWizard_agent_0.0.6_linux_amd64.tar.gz"
+      #     tar xvf /tmp/latest.tar.gz
+      #     mv dockwizard-agent ./backend/api/assets/agent
 
       - name: Build and push
         uses: docker/build-push-action@v4
